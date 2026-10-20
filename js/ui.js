@@ -916,7 +916,7 @@ function recordLife() {
   track('life_end', { era: !!(S.era && S.era !== 'now'), country: S.born, age: d.age, cause: d.cause, decisions: S.stats.decisions, auto: (S.stats.auto || 0) > 0, notes: (S.journal || []).length, minutes: S.startedAt ? Math.round((Date.now() - S.startedAt) / 60000) : null });
 }
 function deathFallback() {
-  probAdd('death');
+  
   try { $('#ending') && $('#ending').remove(); } catch (e) { }
   let story = ''; try { story = storyOf(summaryOf(S)); } catch (e) { }
   $('#dead').innerHTML = L`<div class="panel" style="margin-top:24px"><h3><span>${esc(S.name && S.name.full || '')}</span></h3><p>${esc(story)}</p><p class="lbl" style="margin-top:12px">기록 화면을 그리는 중 문제가 생겼어요. 이 삶은 전생 기록에 남아 있어요.</p></div><div class="vhts-death-actions" style="margin: 1.5rem 0 1rem; display: flex; flex-direction: column; gap: 8px;">
@@ -1092,7 +1092,7 @@ function showDeath() {
   <div class="panel sharebox"><h3><span>Chia sẻ kiếp sống này</span><span class="lbl">Thẻ chứng nhận + Tóm tắt</span></h3>
     <div class="sharegrid"><button class="cardprev" id="cardPrevBtn" aria-label="Xem thẻ cuộc đời phóng to"><img id="cardImg" alt="Thẻ ghi nhận cuộc đời của ${esc(S.name.full)}" hidden><span id="cardWait">Đang kết xuất thẻ…</span></button>
       <div><p class="sharetext" id="shareText">${esc(shareText())}</p>
-        <div class="endbtns"><button class="cta" id="cardShareBtn">Chia sẻ hình ảnh</button><button class="ghost" id="cardSaveBtn">Lưu ảnh thẻ</button><button class="ghost" id="shareBtn">Sao chép tóm tắt</button><button class="ghost" data-fb="1">Góp ý</button></div>
+        <div class="endbtns"><button class="cta" id="cardShareBtn">Chia sẻ hình ảnh</button><button class="ghost" id="cardSaveBtn">Lưu ảnh thẻ</button></div>
         <small class="sharehint">Dữ liệu kiếp sống này đã được lưu vào Ký ức Tiền kiếp trên trình duyệt.</small></div></div></div>
   <div class="a2-tip a2-top a2-end" id="a2Dead" hidden></div>
   <div class="after">
@@ -1404,13 +1404,13 @@ function save() {
   if (lsSet(SAVE_KEY, v)) return;
   const past = lsGet(PAST_KEY, []);
   while (past.length) { past.shift(); try { localStorage.setItem(lk(PAST_KEY), JSON.stringify(past)); } catch (e) { } if (lsSet(SAVE_KEY, v)) return; }
-  if (!UI.saveWarned) { UI.saveWarned = true; probAdd('save'); toast("Trình duyệt này không lưu được ghi chép. Nếu đóng cửa sổ, bạn sẽ không thể tiếp tục cuộc đời này.", 9000); }
+  if (!UI.saveWarned) { UI.saveWarned = true;  toast("Trình duyệt này không lưu được ghi chép. Nếu đóng cửa sổ, bạn sẽ không thể tiếp tục cuộc đời này.", 9000); }
 }
 function restore(st) {
   if (EDU_ON && st && !st.eduOn) { show('intro'); renderIntro(); return; }
   if (st && st.era && st.era !== 'now' && !eraLoaded()) { eraWait(() => restore(st), false); return; }
   try { restore0(st); }
-  catch (e) { reportCaught(e); probAdd('restore'); toast("Không thể mở lại cuộc đời này để tiếp tục. Ghi chép vẫn được giữ nguyên, không bị xóa.", 9000); S = null; show('intro'); renderIntro(); }
+  catch (e) { reportCaught(e);  toast("Không thể mở lại cuộc đời này để tiếp tục. Ghi chép vẫn được giữ nguyên, không bị xóa.", 9000); S = null; show('intro'); renderIntro(); }
 }
 function restore0(st) {
   S = st; S.ff = false; healStats(S); ageSync();
@@ -1663,10 +1663,6 @@ function bind() {
     else if (t.id === 'goFam') { const f = $('.p-fam'); if (f) f.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     else if (t.id === 'goShop') { if (S && S.phase === 'life') openShop(); }
     else if (t.id === 'quitBtn') { if (S && S.phase === 'life') track('life_quit', { age: S.age, country: S.born, era: !!(S.era && S.era !== 'now') }); save(); show('intro'); renderIntro(); }
-    else if (t.dataset.fb) openFeedback();
-    else if (t.dataset.fbt) { UI.fbType = t.dataset.fbt; for (const b of document.querySelectorAll('[data-fbt]')) b.setAttribute('aria-pressed', String(b === t)); updateFbLink(); }
-    else if (t.id === 'fbCopy') { copyText(fbMessage(), "Đã sao chép. Hãy gửi cho chúng tôi qua bình luận hoặc tin nhắn trên Threads."); track('feedback_copy', { type: UI.fbType }); }
-    else if (t.id === 'fbSave') { try { const k = 'vhfb.v1', a = JSON.parse(localStorage.getItem(k) || '[]'); a.push({ at: Date.now(), type: UI.fbType, msg: fbMessage() }); localStorage.setItem(k, JSON.stringify(a.slice(-100))); toast("Đã lưu góp ý trên máy này. Cảm ơn bạn!"); track('feedback_save', { type: UI.fbType }); } catch (e) { toast("Không lưu được góp ý trên máy này."); } }
     else if (t.id === 'openCtyStats' || t.classList.contains('oddsmore')) openCountriesSheet();
     else if (t.id === 'openWorldCodex') openWorldCodex();
     else if (t.id === 'btnMigMap') openMigrationMap();
@@ -1675,7 +1671,6 @@ function bind() {
     else if (t.id === 'clBtn') openChangelog();
     else if (t.dataset.unstar != null) starSwap(+t.dataset.unstar);
     else if (t.id === 'sheetClose' || t.id === 'shopClose') sheetX();
-    else if (t.id === 'shareBtn') shareResult();
     else if (t.id === 'cardShareBtn') { if (S && S.deathAt) shareNoteSave(); shareCard(); }
     else if (t.id === 'dfShare') dfShare();
     else if (t.id === 'shImg') { shareNoteSave(); shareCard(); }
@@ -1719,7 +1714,6 @@ function bind() {
     else if (t.dataset.k && t.closest('#modal')) { if (performance.now() - (UI.decAt || 0) > DEC_ARM_MS) pickChoice(t.dataset.k); }
     else if (t.id === 'ctySwitch') { UI.cview = UI.cview === 'born' ? 'cur' : 'born'; renderCountry(); }
   });
-  document.addEventListener('input', e => { if (e.target.id === 'fbText' || e.target.id === 'fbNick') { updateFbLink(); fbCount(); } });
   document.addEventListener('input', e => { if (e.target.classList && e.target.classList.contains('vol')) setVol(+e.target.value / 100); });
   const fxToggle = li => { const on = !li.classList.contains('open'); li.classList.toggle('open', on); li.setAttribute('aria-expanded', String(on)); };
   document.addEventListener('input', e => { if (e.target.dataset && e.target.dataset.shnote && S) shareNoteInput(e.target); });
@@ -1727,7 +1721,6 @@ function bind() {
   document.addEventListener('click', e => { const st = e.target.closest && e.target.closest('#feed .stb'); if (st) { starToggle(st.closest('li')); return; }
     const li = e.target.closest && e.target.closest('.feed li.hasfx, #feed li.tap'); if (li && !e.target.closest('a, button')) fxToggle(li); });
   document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('.feed li.hasfx, #feed li.tap')) { e.preventDefault(); fxToggle(e.target); } });
-  document.addEventListener('click', e => { if (e.target.id === 'fbSend') { track('feedback_form', { type: UI.fbType }); setTimeout(() => toast("Chỉ khi bạn nhấn nút gửi ở cuối Google Form vừa mở, góp ý mới được gửi đi."), 300); } });
   $('#sheet').addEventListener('click', e => { if (e.target.id === 'sheet') sheetX(); });
   { const t = $('#toast'); if (t) t.addEventListener('click', toastHide); }
   document.addEventListener('keydown', e => {
@@ -2265,60 +2258,6 @@ function openSheet(title, inner) {
 function closeSheet() { UI.sheetBack = null; $('#sheet').hidden = true; $('#sheet').innerHTML = ''; }
 function sheetX() { const f = UI.sheetBack; closeSheet(); if (f) f(); }
 const verStr = () => '1.0';
-function fbContext(noProb) {
-  const p = ['v' + verStr() + (' ' + LANG)];
-  if (S && S.born && CBY[S.born]) {
-    p.push(L`출생 ${B().ko}(${S.born}) ${S.sex === 'F' ? "Nữ" : "Nam"}, ${S.q}분위`);
-    if (S.era === 'past') p.push(L`지난 세상 ${S.by}년생`); else if (S.era === 'future') p.push("Tương lai");
-    p.push(S.phase === 'dead' && S.deathAt ? L`사망 ${S.deathAt.age}세 · ${S.deathAt.cause === 'suic' ? "Đã qua đời" : S.deathAt.label}` : L`${S.age}세`);
-    if (S.cur !== S.born) p.push(L`거주 ${C().ko}`);
-    if (S.age >= 15) p.push(L`일 ${frSx(shortJob(S.job), S.sex) || '-'}`);
-    p.push(L`결정 ${S.stats.decisions}회`);
-  }
-  p.push("màn hình " + ({ intro: "Bắt đầu", roll: "Sinh", lifeview: "Đang sống", dead: "Qua đời" }[UI.view] || UI.view));
-  p.push((window.innerWidth < 700 ? "di động " : "máy tính ") + window.innerWidth + 'px');
-  const ps = noProb ? [] : probList();
-  if (ps.length) p.push("Sự cố gần đây " + ps.slice(-4).map(x => x.k + (x.d ? ':' + x.d : '') + ' v' + x.v).join(', '));
-  return p.join(' | ');
-}
-function fbMessage() {
-  const txt = ($('#fbText') || {}).value || '', nick = ($('#fbNick') || {}).value || '';
-  return L`[Vô Hạn Trùng Sinh 의견]\n종류: ${UI.fbType}\n내용: ${txt.trim() || "(trống)"}${nick.trim() ? L`\n닉네임: ${nick.trim()}` : ''}\n플레이 정보: ${UI.fbCtx}`;
-}
-const FB_MAX = 1200;
-function fbCount() {
-  const ta = $('#fbText'), c = $('#fbCount'); if (!ta || !c) return;
-  const n = ta.value.length; c.textContent = `${n.toLocaleString(LC.loc)} / ${FB_MAX.toLocaleString(LC.loc)}`; c.classList.toggle('near', n >= FB_MAX - 200);
-}
-function fbUrl() {
-  if (!CONFIG.feedbackForm) return '';
-  const enc = v => encodeURIComponent(v);
-  const txt = (($('#fbText') || {}).value || '').slice(0, FB_MAX), nick = ($('#fbNick') || {}).value || '';
-  return CONFIG.feedbackForm.replace(/=TYPE(?=&|$)/, '=' + enc(FB_TYPES_FORM[FB_TYPES.indexOf(UI.fbType)] || UI.fbType)).replace(/=TEXT(?=&|$)/, '=' + enc(txt)).replace(/=CTX(?=&|$)/, '=' + enc(UI.fbCtx)).replace(/=NICK(?=&|$)/, '=' + enc(nick))
-    + '&hl=' + LANG;
-}
-function updateFbLink() { const a = $('#fbSend'); if (a) a.href = fbUrl(); }
-const privacyLink = () => `<a href="${LP}/privacy" target="_blank" rel="noopener">${"Chính sách quyền riêng tư"}</a>`;
-function openFeedback() {
-  if (EDU_ON) return;
-  UI.fbType = UI.fbType || FB_TYPES[0];
-  UI.fbCtx = fbContext();
-  if (S && UI.view === 'lifeview') S.ff = false;
-  const act = CONFIG.feedbackForm
-    ? "<a class=\"cta\" id=\"fbSend\" href=\"#\" target=\"_blank\" rel=\"noopener\">Gửi qua Google Form</a><small>Một Google Form đã điền sẵn nội dung sẽ mở trong thẻ mới. Phần mô tả và câu hỏi bằng tiếng Hàn (kèm tiếng Anh): chỉ cần nhấn nút “Gửi” ở cuối biểu mẫu.</small>"
-    : "<button class=\"cta\" id=\"fbCopy\">Sao chép nội dung</button><button class=\"ghost\" id=\"fbSave\">Lưu lại trên máy này</button><small>Bạn có thể sao chép rồi gửi qua bình luận/tin nhắn, hoặc lưu lại trên máy này — góp ý của bạn luôn được ghi nhận.</small>";
-  openSheet("Gửi góp ý", "<h2>Điều gì có vẻ chưa đúng?</h2><p>Thông tin về cuộc đời bạn đang sống sẽ được tự động đính kèm. Chỉ một dòng cũng được.</p>"
-    + `<p class="fbnote">${esc(capS("Ý tưởng hay góp ý dài cũng xin hãy gửi ở đây thay vì qua email." + ' ' + "Mọi góp ý được gom về một nơi, và chúng tôi đọc từng góp ý một, không bỏ sót."))}</p>` + L`
-    <div class="fbtypes" role="group" aria-label="의견 종류">${FB_TYPES.map(t => `<button data-fbt="${t}" aria-pressed="${t === UI.fbType}">${t}</button>`).join('')}</div>
-    <label class="field"><span class="lbl">내용</span><textarea id="fbText" maxlength="${FB_MAX}" placeholder="예) 말리에서 태어났는데 15세에 대학 진학 결정이 나왔어요"></textarea></label><p class="fbcount"><span id="fbCount"></span> <span>${"Nếu muốn viết dài hơn, hãy viết tiếp trong ô đó sau khi Google Form mở ra."}</span></p>
-    <label class="field"><span class="lbl">닉네임 (선택)</span><input id="fbNick" maxlength="40" autocomplete="nickname"></label>
-    <div class="ctxbox">${esc(UI.fbCtx)}</div><div class="sheetact">${act}</div>`
-    + (CONFIG.feedbackForm ? `<p class="fbnote">${"Nội dung bạn gửi sẽ được chuyển đến và lưu trên Google Forms (Mỹ). Vui lòng đừng ghi tên hay thông tin liên lạc."} ${privacyLink()}</p>` : '')
-    + `<p class="fbnote">${"Với vấn đề cần được trả lời (thanh toán, thẻ Lưu giữ, ghi chép bị mất...), <a href=\"#\" data-help=\"1\">hãy báo cho chúng tôi qua email</a>."}</p>`);
-  updateFbLink(); fbCount();
-  const ta = $('#fbText'); if (ta) ta.focus({ preventScroll: true });
-  track('feedback_open', { view: UI.view });
-}
 function openChangelog() {
   const list = ({ en: CHANGELOG_EN, ja: CHANGELOG_JA, zh: CHANGELOG_ZH, vi: CHANGELOG_VI, fr: CHANGELOG_FR, th: CHANGELOG_TH }[LANG] || CHANGELOG);
   const draw = l => `<ul class="cl">${l.map(c => `<li><b>v${esc(c.v)}</b><span>${esc(c.d)}</span><ul>${c.items.map(i => `<li>${esc(i)}</li>`).join('')}</ul></li>`).join('')}</ul>`;
@@ -2478,11 +2417,6 @@ function friendLine() {
     return L`누군가 ${+p[3]}년, ${placeOf(p[1])}에서 ${ro(sexOf(p[0]))} 태어났어요. 그해 태어난 아기 ${(+p[2]).toLocaleString('vi-VN')}명 중 1명꼴이에요. 당신은 어디서 태어날까요?`;
   if (m[1] === 'b' && p.length >= 3 && /^\d{1,6}$/.test(p[2])) return L`누군가 방금 ${placeOf(p[1])}에서 ${ro(sexOf(p[0]))} 태어났어요. 지금 태어나는 아기 ${(+p[2]).toLocaleString('vi-VN')}명 중 1명꼴이에요. 당신은 어디서 태어날까요?`;
   return '';
-}
-function shareResult() {
-  shareNoteSave(); const text = shareText(); track('share', { kind: shareKind('death') });
-  if (navigator.share) { navigator.share({ text }).catch(e => { if (!e || e.name !== 'AbortError') copyText(text, L`글과 링크를 복사했어요. ${pasteWhere()} 붙여넣어 주세요.`); }); return; }
-  copyText(text, L`글과 링크를 복사했어요. ${pasteWhere()} 붙여넣어 주세요.`);
 }
 HOOK.log = e => { if (UI.view === 'lifeview') { addFeed(e); if (e.egg && S && !S.isComp) toast("Bạn đã tìm thấy một bất ngờ được giấu kín (easter egg)! Ngoài đời thật, đây cũng là khoảnh khắc rất hiếm có.", 4600); } };
 HOOK.change = () => { UI.dirty = true; };

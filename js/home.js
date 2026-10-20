@@ -730,35 +730,13 @@ const CHANGELOG_ZH = [];
 const CHANGELOG_JA = [];
 const CHANGELOG_EN = [];
 const CHANGELOG = [];
-const FB_TYPES_FORM = ['버그·오류', '통계가 이상해요', '너무 쉽거나 어려워요', '이벤트·결정 아이디어', '디자인·사용성', '기타'];
-const FB_TYPES = ["Lỗi / sự cố", "Số liệu thống kê có vẻ sai", "Quá dễ hoặc quá khó", "Ý tưởng sự kiện / quyết định", "Thiết kế / trải nghiệm sử dụng", "Khác"];
 (function copyNote() {
   // Disclaimers disabled permanently
 })();
 const REPL_KEY = 'one8b.repl.v1';
 const ageBand = a => { a = +a || 0; return a < 5 ? '0' : a < 15 ? '5' : a < 40 ? '15' : a < 65 ? '40' : '65'; };
-const SID = Math.random().toString(36).slice(2, 10).padEnd(8, '0');
 const FRIEND_PATH = (location.pathname.match(/^\/(?:[a-z]{2}\/)?s\/([a-z0-9-]{4,40})$/i) || [])[1] || '';
 const STANDALONE = (() => { try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; } })();
-const SRC = (() => {
-  const via = src => FRIEND_PATH ? (src === 'direct' ? 'friend' : 'friend-' + src).slice(0, 24) : src;
-  try {
-    const q = new URLSearchParams(location.search), u = q.get('utm_source') || q.get('ref');
-    if (STANDALONE && !u && !FRIEND_PATH) return 'home';
-    if (u) return via(u.toLowerCase().replace(/[^a-z0-9._-]/g, '').slice(0, 24) || 'direct');
-    const r = document.referrer ? new URL(document.referrer).hostname.replace(/^www\.|^m\.|^l\./, '') : '';
-    const BY_HOST = [[/threads\.(net|com)$/, 'threads'], [/^(t\.co|x\.com|twitter\.com)$/, 'x'], [/instagram\.com$/, 'instagram'], [/facebook\.com$|^fb\.me$/, 'facebook'],
-      [/kakao/, 'kakao'], [/naver\.(com|me)$/, 'naver'], [/(^|\.)google\./, 'google'], [/daum\.net$/, 'daum'], [/bing\.com$/, 'bing'], [/youtube\.com$/, 'youtube'],
-      [/reddit\.com$/, 'reddit'], [/line\.me$/, 'line'], [/duckduckgo\.com$/, 'duckduckgo']];
-    if (r && r !== location.hostname) { for (const [re, n] of BY_HOST) if (re.test(r)) return via(n); return via(r.slice(0, 24)); }
-    const ua = navigator.userAgent;
-    const BY_APP = [[/Barcelona/, 'threads'], [/Instagram/, 'instagram'], [/FBAN|FBAV|FB_IAB/, 'facebook'], [/KAKAOTALK/i, 'kakao'], [/NAVER\(inapp/, 'naver'],
-      [/ Line\//, 'line'], [/Twitter/, 'x'], [/DaumApps/, 'daum']];
-    for (const [re, n] of BY_APP) if (re.test(ua)) return via(n);
-  } catch (e) { }
-  return via('direct');
-})();
-const SRCL = 'vi:' + SRC;
 function pasteWhere() { const ua = navigator.userAgent || ''; return /KAKAOTALK/i.test(ua) ? "vào cuộc trò chuyện KakaoTalk" : /Barcelona/.test(ua) ? "vào Threads" : /Instagram/.test(ua) ? "vào Instagram" : "vào cuộc trò chuyện hoặc Threads"; }
 const DEV = (() => {
   const ua = navigator.userAgent;
@@ -780,56 +758,12 @@ const ownLine = (file, l) => {
 };
 const ownFrame = st => { for (const m of String(st || '').matchAll(/(https?:\/\/[^\s()@]+?):(\d+):\d+/g)) if (ownLine(m[1], +m[2])) return +m[2]; return 0; };
 function reportErr(line, msg, kind) {
-  if (+line > 0 && probErrN++ < 3) probAdd('err', kind + Math.floor(+line));
-  try {
-    let h = 0; for (const ch of String(msg || '').slice(0, 200)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-    const k = `${CONFIG.version.replace(/[^0-9.]/g, '')}${{ en: 'e', ja: 'j', zh: 'z', vi: 'v', fr: 'f', th: 't' }[LANG] || 'k'}${kind}${Math.max(0, +line || 0)}-${h.toString(36).slice(0, 5)}`;
-    const body = JSON.stringify({ e: 'err', k, s: SID, src: SRCL, d: DEV });
-  } catch (e) { }
+  try { console.warn('[Vô Hạn Trùng Sinh] lỗi:', kind, line, msg); } catch (e) { }
 }
 function reportCaught(err) {
   try { reportErr(ownFrame(err && err.stack), (err && err.message) || String(err), 'c'); } catch (e) { }
   try { console.error(err); } catch (e) { }
 }
-const PROB_KEY = 'one8b.prob.v1', PROB_MAX = 12, PROB_DAYS = 30, PROB_MEM = [];
-function probList() {
-  let l = []; try { l = JSON.parse(localStorage.getItem(PROB_KEY) || '[]'); } catch (e) { } if (!Array.isArray(l)) l = [];
-  const seen = new Set(l.map(x => x && x.t + x.k)), now = Date.now();
-  return l.concat(PROB_MEM.filter(x => !seen.has(x.t + x.k))).filter(x => x && typeof x === 'object' && now - (+x.t || 0) < PROB_DAYS * 864e5).sort((a, b) => a.t - b.t).slice(-PROB_MAX);
-}
-function probAdd(k, d) {
-  try {
-    const l = probList(), last = l[l.length - 1], x = { t: Date.now(), k: String(k), d: String(d == null ? '' : d).slice(0, 40), v: CONFIG.version.replace(/[^0-9.]/g, '') };
-    if (last && last.k === x.k && last.d === x.d && x.t - last.t < 60e3) return;
-    PROB_MEM.push(x); if (PROB_MEM.length > PROB_MAX) PROB_MEM.shift();
-    try { localStorage.setItem(PROB_KEY, JSON.stringify(l.concat([x]).slice(-PROB_MAX))); } catch (e) { }
-  } catch (e) { }
-}
-const PROB_NM = () => ({ err: "Lỗi trên trang", save: "Không lưu được ghi chép", restore: "Không mở lại được cuộc đời đang sống dở", death: "Màn hình kết thúc cuộc đời không hiện đầy đủ",
-  mem: "Không đặt được vào Nhà tưởng niệm", memst: "Không thay đổi được trang trí Nhà tưởng niệm", film: "Quay video không hoàn tất", unlock: "Thẻ Lưu giữ không mở được",
-  pay: "Xác nhận thẻ Lưu giữ bị chậm sau khi thanh toán", carry: "Không mở được cuộc đời đã chuyển sang", move: "Không chuyển được các cuộc đời", era: "Không tải được dữ liệu của thời kỳ khác" });
-function probLine(x) {
-  const d = new Date(x.t), hm = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-  return `${d.getDate() + '/' + (d.getMonth() + 1)} ${hm} · v${x.v} · ${PROB_NM()[x.k] || x.k}${x.d ? ` (${x.d})` : ''}`;
-}
-async function helpBody() {
-  const code = '', app = inAppName(), ps = probList();
-  return ["Chuyện gì đã xảy ra?", '', '', '', "---- Thông tin để tìm lỗi (xin đừng xóa khi gửi) ----", fbContext(true),
-    L`기기: ${DEV}${app ? ' · ' + L`${app} 안 브라우저` : ''} · ${window.innerWidth}px`,
-    code ? L`간직하기 이용권 확인 코드: ${code}` : "Thẻ Lưu giữ: không có trên thiết bị này",
-    ps.length ? "Sự cố gần đây trên thiết bị này:" : "Sự cố gần đây trên thiết bị này: không có", ...ps.slice(-8).map(x => '- ' + probLine(x))].join('\n');
-}
-async function helpSheet() {
-  if (EDU_ON) return;
-  const body = await helpBody(), subj = "Báo lỗi Vô Hạn Trùng Sinh";
-  openSheet("Báo lỗi", `<div class="ku"><p class="fbnote fbgo">${esc(capS("Những điều bạn muốn chúng tôi sửa và các đề xuất, xin hãy gửi qua 'Gửi góp ý' thay vì email." + ' ' + "Tất cả được gom về một nơi và chúng tôi xem từng góp ý, không bỏ sót."))} <button class="ghost sm" data-fb="1">${"Gửi góp ý"}</button></p><p class="cm-sub">${"Với sự cố cần phản hồi (thanh toán, thẻ Lưu giữ, Lưu giữ, ghi chép bị mất...), xin hãy báo cho chúng tôi qua email. Thông tin cần để tìm nguyên nhân đã được điền sẵn bên dưới. Bạn có thể xem và xóa bớt trước khi gửi."}</p>
-    <p class="ku-url ku-mail">${esc(subj)}<br><br>${esc(body).replace(/\n/g, '<br>')}</p>
-    <div class="kp-row"><button class="ghost" id="hpCopy">${"Sao chép nội dung"}</button></div>
-    <p class="ku-how">${"Nếu ứng dụng thư không mở, hãy sao chép nội dung rồi gửi đến địa chỉ này từ hộp thư bạn đang dùng. Kèm ảnh chụp màn hình thì càng tốt."}</p></div>`);
-  const b = $('#hpCopy'); if (b) b.onclick = () => { copyText(`${subj}\n\n${body}`, "Đã sao chép. Hãy dán vào email rồi gửi đi."); track('help', { kind: 'copy' }); };
-  track('help', { kind: 'open' });
-}
-document.addEventListener('click', e => { const a = e.target && e.target.closest && e.target.closest('[data-help]'); if (!a) return; e.preventDefault(); helpSheet(); });
 const IDLE_MS = 20 * 60e3;
 function track(name, props) {
   try {
@@ -869,8 +803,8 @@ function eraWait(go, fresh) {
   const n = ++ERA_W, msg = "Đang tải dữ liệu của thời kỳ khác…", live = () => n === ERA_W;
   const end = () => { clearTimeout(t1); clearTimeout(t2); if (live()) ERA_W++; const t = $('#toast'); if (t && t.textContent === capS(msg)) t.hidden = true; };
   const t1 = setTimeout(() => { if (live()) toast(msg, ERA_STOP_MS); }, ERA_SLOW_MS);
-  const t2 = setTimeout(() => { if (!live()) return; end(); probAdd('era', 'slow'); toast(fresh ? "Dữ liệu của thời kỳ khác tải quá lâu nên đã dừng. Hãy nhấn lại, hoặc chọn 'Hôm nay'." : "Dữ liệu của thời kỳ khác tải quá lâu nên đã dừng. Vui lòng thử lại sau giây lát.", 8000); }, ERA_STOP_MS);
-  eraLoad().then(() => { if (!live()) return; end(); go(); }, () => { if (!live()) return; end(); probAdd('era', 'load'); toast("Không tải được dữ liệu của thời kỳ khác. Vui lòng thử lại sau giây lát.", 6000); });
+  const t2 = setTimeout(() => { if (!live()) return; end();  toast(fresh ? "Dữ liệu của thời kỳ khác tải quá lâu nên đã dừng. Hãy nhấn lại, hoặc chọn 'Hôm nay'." : "Dữ liệu của thời kỳ khác tải quá lâu nên đã dừng. Vui lòng thử lại sau giây lát.", 8000); }, ERA_STOP_MS);
+  eraLoad().then(() => { if (!live()) return; end(); go(); }, () => { if (!live()) return; end();  toast("Không tải được dữ liệu của thời kỳ khác. Vui lòng thử lại sau giây lát.", 6000); });
 }
 const ERA_Y_DEF = 1980;
 const eraPick = () => !EDU_ON && !UI.prefs.eraAny && (UI.prefs.era === 'past' || UI.prefs.era === 'future') ? UI.prefs.era : 'now';
