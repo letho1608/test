@@ -1666,6 +1666,7 @@ function bind() {
     else if (t.dataset.fb) openFeedback();
     else if (t.dataset.fbt) { UI.fbType = t.dataset.fbt; for (const b of document.querySelectorAll('[data-fbt]')) b.setAttribute('aria-pressed', String(b === t)); updateFbLink(); }
     else if (t.id === 'fbCopy') { copyText(fbMessage(), "Đã sao chép. Hãy gửi cho chúng tôi qua bình luận hoặc tin nhắn trên Threads."); track('feedback_copy', { type: UI.fbType }); }
+    else if (t.id === 'fbSave') { try { const k = 'vhfb.v1', a = JSON.parse(localStorage.getItem(k) || '[]'); a.push({ at: Date.now(), type: UI.fbType, msg: fbMessage() }); localStorage.setItem(k, JSON.stringify(a.slice(-100))); toast("Đã lưu góp ý trên máy này. Cảm ơn bạn!"); track('feedback_save', { type: UI.fbType }); } catch (e) { toast("Không lưu được góp ý trên máy này."); } }
     else if (t.id === 'openCtyStats' || t.classList.contains('oddsmore')) openCountriesSheet();
     else if (t.id === 'openWorldCodex') openWorldCodex();
     else if (t.id === 'btnMigMap') openMigrationMap();
@@ -2290,6 +2291,7 @@ function fbCount() {
   const n = ta.value.length; c.textContent = `${n.toLocaleString(LC.loc)} / ${FB_MAX.toLocaleString(LC.loc)}`; c.classList.toggle('near', n >= FB_MAX - 200);
 }
 function fbUrl() {
+  if (!CONFIG.feedbackForm) return '';
   const enc = v => encodeURIComponent(v);
   const txt = (($('#fbText') || {}).value || '').slice(0, FB_MAX), nick = ($('#fbNick') || {}).value || '';
   return CONFIG.feedbackForm.replace(/=TYPE(?=&|$)/, '=' + enc(FB_TYPES_FORM[FB_TYPES.indexOf(UI.fbType)] || UI.fbType)).replace(/=TEXT(?=&|$)/, '=' + enc(txt)).replace(/=CTX(?=&|$)/, '=' + enc(UI.fbCtx)).replace(/=NICK(?=&|$)/, '=' + enc(nick))
@@ -2304,7 +2306,7 @@ function openFeedback() {
   if (S && UI.view === 'lifeview') S.ff = false;
   const act = CONFIG.feedbackForm
     ? "<a class=\"cta\" id=\"fbSend\" href=\"#\" target=\"_blank\" rel=\"noopener\">Gửi qua Google Form</a><small>Một Google Form đã điền sẵn nội dung sẽ mở trong thẻ mới. Phần mô tả và câu hỏi bằng tiếng Hàn (kèm tiếng Anh): chỉ cần nhấn nút “Gửi” ở cuối biểu mẫu.</small>"
-    : "<button class=\"cta\" id=\"fbCopy\">Sao chép nội dung</button><small>Hãy gửi nội dung đã sao chép cho chúng tôi qua bình luận hoặc tin nhắn trên Threads.</small>";
+    : "<button class=\"cta\" id=\"fbCopy\">Sao chép nội dung</button><button class=\"ghost\" id=\"fbSave\">Lưu lại trên máy này</button><small>Bạn có thể sao chép rồi gửi qua bình luận/tin nhắn, hoặc lưu lại trên máy này — góp ý của bạn luôn được ghi nhận.</small>";
   openSheet("Gửi góp ý", "<h2>Điều gì có vẻ chưa đúng?</h2><p>Thông tin về cuộc đời bạn đang sống sẽ được tự động đính kèm. Chỉ một dòng cũng được.</p>"
     + `<p class="fbnote">${esc(capS("Ý tưởng hay góp ý dài cũng xin hãy gửi ở đây thay vì qua email." + ' ' + "Mọi góp ý được gom về một nơi, và chúng tôi đọc từng góp ý một, không bỏ sót."))}</p>` + L`
     <div class="fbtypes" role="group" aria-label="의견 종류">${FB_TYPES.map(t => `<button data-fbt="${t}" aria-pressed="${t === UI.fbType}">${t}</button>`).join('')}</div>
@@ -2526,3 +2528,7 @@ HOOK.death = () => {
     if (S.endD) playEnding(S.endD, { after }).catch(e => { reportCaught(e); closeEnding(); });
   }, 900);
 };
+HOOK.year = () => { UI.dirty = true;
+  if (S && S.age === 6 && S.phase === 'life' && !S.flags.p6 && !S.replay && !UI.prefs.auto && UI.prefs.foUsed && (S.speed >= 8 || S.ff) && focusOptions().length) {
+    S.flags.p6 = 1; S.paused = true; S.ff = false; try { renderTop(); } catch (e) { } toast("Bạn đã sáu tuổi. Hãy chọn năm nay dành cho điều gì rồi tiếp tục.", 5000); }
+  save(); if (S && [5, 15, 40, 65].includes(S.age)) track('life_progress', { age: S.age, auto: !!UI.prefs.auto }); };
