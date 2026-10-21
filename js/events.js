@@ -575,7 +575,6 @@ const EVENTS = [
       eff({ h: -1 }); return "Số tiền cho vay không bao giờ được trả lại. Nhưng bạn không mất đi người bạn ấy."; } },
 ];
 const EVMAP = {};
-EVENTS.forEach(e => { EVMAP[e.id] = e; });
 const proSportH = h => { const sp = (S.ath && S.ath.sp) || S.flags.athSp; return !!sp && h.id.startsWith('sp_') && hobbyName(h.id) === sp; };
 const PRO_ART_H = { musician: ['music', 'karaoke'], idol: ['music', 'karaoke', 'dance'], dancer: ['dance'], artist: ['art'] };
 const proArtMark = id => { if (S && PRO_ART_H[id]) { const a = S.flags.proArt || (S.flags.proArt = []); if (!a.includes(id)) a.push(id); } };

@@ -80,7 +80,6 @@ const HUM = {
       if (k === 'talk') { eff({ so: 1, h: 1 }); return "Bạn đưa cho đứa trẻ chút đồ ăn vặt và bắt chuyện. Đứa trẻ chỉ gật đầu. Từ đó, bạn luôn để mắt đến nhà ấy."; }
       eff({ h: -3 }); return { t: "Mỗi lần đi ngang qua nhà ấy, lòng bạn lại nặng trĩu.", k: 'bad' }; } },
 };
-Object.assign(DEC, HUM);
 const parAway = () => (S.fam.mom.alive || (S.fam.dad.alive && !S.fam.dad.absent)) && !parHome() && !farFromNK() && !rohAway();
 const parAbroad = () => parAway() && !!S.mig && !famCame() && S.cur !== S.born;
 const homeTrip = () => med() * 0.12;
@@ -166,7 +165,6 @@ const SMALL = {
       if (k === 'bank') { S.money -= med() * 0.05; eff({ so: 2, h: 2 }); return "Bạn mở sổ tiết kiệm đứng tên cháu và gửi khoản tiền đầu tiên. Bạn dặn cháu lớn lên hãy dùng khi thật cần."; }
       eff({ so: 2, h: 1 }); return "Bạn ôm thật chặt từng đứa cháu."; } },
 };
-Object.assign(DEC, SMALL);
 const SM_P = 0.09, SM_GAP = 5;
 function smallPick() {
   if (S.isComp || S.age < 7 || S.age >= 65 || S.job === 'prison' || S.serveLeft > 0 || S.flags.hideCN) return null;

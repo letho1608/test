@@ -148,14 +148,6 @@ function childDisaster(kind) {
   log(L`${iga(n)} 마을을 덮쳤습니다. ${pick(poor ? [L`${eun(parW())} 빚을 내 무너진 집을 다시 고쳤습니다.`, "Một thời gian, bạn phải nương nhờ nhà họ hàng.", "Nhờ hàng xóm chung tay, ngôi nhà bị sập đã được dựng lại."] : [L`${eun(parW())} 모아 둔 돈으로 집을 다시 고쳤습니다.`, "Bạn cùng hàng xóm dọn dẹp những gì bị tàn phá."])}`, 'bad', fact);
   if (poor && S.q > 1 && chance(0.25)) S.q--;
 }
-DEC.hivtx = {
-  build: () => ({ title: "Bắt đầu điều trị?", body: S.hiv.src === 'birth' ? "Bạn biết được rằng mình mang HIV từ lúc chào đời, lây từ mẹ." : "Bạn nhận kết quả dương tính với HIV. Bạn sợ những người xung quanh biết chuyện.", fact: "Trong khoảng 39,9 triệu người có HIV trên thế giới, 77% đang được điều trị. Nếu điều trị đều đặn, người có HIV có thể sống lâu gần bằng người không nhiễm (UNAIDS 2024)",
-    choices: [{ k: 'art', label: "Bắt đầu điều trị", sub: "Uống thuốc mỗi ngày · tuổi thọ gần như phục hồi" }, { k: 'hide', label: "Không nói với ai và trì hoãn", sub: "Sợ bị kỳ thị · rất nguy hiểm" }] }),
-  apply: k => {
-    if (k === 'art') { S.hiv.art = true; eff({ h: -2 }); return pick(["Bạn đã bắt đầu điều trị. Mỗi ngày bạn uống thuốc vào cùng một giờ.", "Bạn đã bắt đầu điều trị. Chuyên viên tư vấn giới thiệu cho bạn một nhóm những người cùng hoàn cảnh."]); }
-    S.flags.hivAsk = S.age + 3; eff({ h: -8 }); return { t: "Bạn không thể nói với ai.", k: 'bad' };
-  }
-};
 const med = () => incomeAt(C(), 0.5);
 const FAM_PAY = [0, 0.05, 0.2, 0.45, 0.75, 1];
 const famCareSh = () => S.age >= 18 && S.age < 35 && !S.fam.married && famCanHelp() && !rohCamp() ? (S.flags.rich ? 1 : [0, 0, 0, 0, 0.5, 0.8][S.q] || 0) : 0;
@@ -1158,7 +1150,6 @@ const MKT_S0 = { USA: [1950, '29,13,14,-3,51,30,3,-15,38,9,-2,24,-11,20,14,9,-14
   JPN: [1960, '51,2,-6,-18,-3,11,-1,-14,28,32,-21,29,83,-26,-28,2,5,-10,19,6,0,2,1,20,13,11,41,14,38,25,-41,-7,-28,1,12,0,-3,-23,-11,37,-27,-23,-18,24,7,40,6,-11,-43,20,-2,-17,23,56,4,8,1,19,-13,18,16,5,-11,24,16,23'],
   KOR: [1980, '-15,4,-5,-6,18,15,63,87,62,-5,-29,-20,5,22,12,-18,-29,-44,39,82,-52,32,-12,25,7,50,2,29,-43,46,19,-14,7,0,-6,2,3,20,-18,8,30,1,-28,15,-11,72'] };
 const MKT_S = {};
-for (const k in MKT_S0) { const [y0, s] = MKT_S0[k], m = MKT_S[k] = {}; s.split(',').forEach((v, i) => { m[y0 + i] = +v / 100; }); }
 const MKT_MU = 0.0788;
 const eraBy = (rows, f) => { const m = {}; for (const r of rows) for (const i of f(r)) (m[i] || (m[i] = [])).push(r); return m; };
 const WAR_BY = eraBy(ERA_WAR, r => [r[0]]), CRI_BY = eraBy(ERA_CRISIS, r => [r[0]]), POL_BY = eraBy(ERA_POL, r => r[0]);
@@ -1870,32 +1861,6 @@ function eraGoKid(yr) {
   if (g.kind === 'boat' && chance(g.caught)) { eff({ h: -6 }); log(T.kid + ' ' + "Nhưng chưa kịp ra khơi thì đã bị bắt và đưa trở về.", 'bad', T.f); return; }
   log(T.kid, 'big', T.f); emigrate(to, false, g.kind === 'boat'); S.flags.exile = g.k;
 }
-DEC.histgo = {
-  ok: p => !!(p && ERA_GO.find(g => g.k === p.k)) && !S.mig,
-  build: p => { const T = ERA_GO_T()[p.k];
-    return { title: T.t, body: T.b, fact: T.f, choices: [{ k: 'go', label: T.go, sub: p.k === 'boat' ? "Phải liều cả mạng sống" : p.k === 'mideast' || p.k === 'pado' ? "Thu nhập ↑ · phải xa gia đình" : "Bắt đầu lại ở một đất nước xa lạ" }, { k: 'stay', label: "Ở lại", sub: '' }] }; },
-  apply: (k, p) => {
-    const g = ERA_GO.find(x => x.k === p.k); S.flags['hg_' + g.k] = 1; if (k === 'stay') return false;
-    const m = incomeAt(C(), 0.5);
-    if (g.kind === 'temp') { const x = Math.max(S.income, m * 0.6) * 2.4; S.money += x; book("Tiền dành dụm từ hợp đồng ở nước ngoài", x); eff({ h: -2, so: -3, hl: -2 });
-      return L`사우디아라비아 건설 현장에서 2년을 일하고 돌아왔습니다. 뜨거운 모래바람 속에서 모은 돈은 ${wonStr(x)}입니다.`; }
-    if (g.kind === 'contract') {
-      const x = Math.max(S.income, m * 0.6) * 3; S.money += x; book("Tiền dành dụm từ hợp đồng ở nước ngoài", x); eff({ so: -2 });
-      if (chance(g.stay) && CBY.DEU) { emigrate('DEU', false, false); return L`서독에서 3년 계약을 마쳤습니다. 모은 돈 ${wonStr(x)}을 들고 그대로 독일에 남아 살기로 했습니다.`; }
-      return L`서독에서 3년 계약을 마치고 돌아왔습니다. 고향에 부친 돈과 남은 돈이 ${wonStr(x)}입니다.`;
-    }
-    const to = eraGoDest(g); if (!to) return false;
-    if (g.kind === 'boat') {
-      const fare = Math.max(0, S.money) * 0.5; S.money -= fare; book("Tiền đi thuyền", -fare);
-      if (chance(g.die)) { die('drown', "Chết đuối trên biển trên đường chạy nạn"); return false; }
-      if (chance(g.caught)) { eff({ h: -10 }); return { t: "Chưa kịp ra khơi, bạn đã bị bắt, bị giam mấy tháng rồi mới được thả. Số vàng trả tiền thuyền không bao giờ lấy lại được.", k: 'bad' }; }
-      emigrate(to, false, true); S.flags.exile = g.k;
-      return L`며칠을 바다 위에서 버틴 끝에 난민촌에 닿았고, 이듬해 ${CBY[to].ko}에 정착하게 되었습니다.`;
-    }
-    emigrate(to, S.edu >= 4, false); S.flags.exile = g.k;
-    return L`가방 몇 개에 살림을 담아 ${ro(CBY[to].ko)} 떠났습니다. 낯선 나라에서 새로 시작합니다.`;
-  }
-};
 const cityAt = (iso, i) => !!S.city && S.city === (CITIES[iso] || '').split(',')[i];
 const CR_INT = new Set(['teacher', 'prof', 'doctor', 'engineer', 'lawyer', 'finance', 'artist', 'musician', 'actor', 'designer', 'nurse', 'healthtech']);
 const CR_CADRE = new Set(['civil', 'police', 'clerk']);
@@ -2013,107 +1978,6 @@ function eraRoleFire(id, key) {
   if (id === 'czr') { if (!p.alive) return; eff({ h: 3 }); return log(L`벨벳 혁명 뒤 ${iga(lb)} 20년 만에 명예를 되찾았습니다.`, 'big'); }
   if (id === 'exn') { eff({ h: 5 }); return log("Bạn nghe tin chế độ quân sự ở quê nhà đã chấm dứt. Giờ đây con đường trở về đã mở ra.", 'big'); }
 }
-DEC.histrg = {
-  ok: () => S.cur === 'CHN',
-  build: () => {
-    const b = crCls() === 'b', ch = [];
-    if (!b) ch.push({ k: 'join', label: "Đeo băng tay Hồng vệ binh", sub: "Hầu hết các bạn trong lớp đều tham gia · báo chữ to phê phán giáo viên" });
-    ch.push({ k: 'out', label: "Đứng ngoài, ở yên trong nhà", sub: "Sẽ bị gọi là “phái tiêu dao”" }, { k: 'help', label: "Lén giúp giáo viên chủ nhiệm", sub: "Bị phát hiện thì chính mình cũng bị phê phán" });
-    return { title: "Được hỏi có muốn làm Hồng vệ binh không", body: (eraYr() === 1966 ? "Trường học đã ngừng dạy." : "Trường đã đóng cửa mấy tháng nay.") + ' ' + "Các bạn cùng lớp đeo băng tay đỏ, rủ nhau dán báo chữ to tố cáo giáo viên chủ nhiệm là “quyền uy học thuật phản động”." + (b ? ' ' + "Nhưng nghe nói con cái những gia đình có “thành phần xuất thân” xấu thì không được làm Hồng vệ binh." : ''),
-      fact: "Chỉ riêng tháng 8–9 năm 1966, ở Bắc Kinh đã có 1.772 người bị Hồng vệ binh giết hại, nhiều người trong số đó là giáo viên (số liệu chính thức của thành phố Bắc Kinh, 1980)", choices: ch };
-  },
-  apply: k => {
-    S.flags.crRG = k;
-    if (k === 'join') { eff({ so: 3, h: 2 }); const far = S.urban && eraYr() === 1966 && chance(0.5);
-      return { t: far ? "Bạn đã đeo băng tay đỏ. Bạn đi tàu miễn phí lên Bắc Kinh, và từ giữa biển người chật kín quảng trường Thiên An Môn, bạn trông thấy Chủ tịch Mao từ xa." : "Bạn đã đeo băng tay đỏ. Trong buổi phê đấu người giáo viên, bạn cùng các bạn khác hô khẩu hiệu.", k: 'ev',
-        f: far ? "Từ tháng 8 đến tháng 11 năm 1966, Mao Trạch Đông đã tiếp 11–12 triệu Hồng vệ binh tại quảng trường Thiên An Môn" : null }; }
-    if (k === 'out') { eff({ sm: 3, so: -2 }); return { t: "Bạn không tham gia Hồng vệ binh mà ở nhà, trùm chăn đọc những cuốn sách lén kiếm được. Những đứa trẻ như vậy bị gọi là “phái tiêu dao”.", k: 'ev' }; }
-    if (chance(crCls() === 'b' ? 0.4 : 0.25)) { S.flags.crRG = 'caught'; eff({ h: -8, so: -6 }); return { t: "Bạn bị phát hiện khi lén để bánh bao ở nhà người giáo viên, và phải tự phê bình trước cả lớp.", k: 'bad' }; }
-    eff({ h: 2 }); return { t: "Ban đêm, bạn lén để mấy chiếc bánh bao trước cửa nhà người giáo viên. Không ai biết cả.", k: 'warm' };
-  }
-};
-DEC.histdemo = {
-  ok: p => !!p && (p.k === 'kor' ? S.cur === 'KOR' && S.school === 'uni' : S.cur === 'CHN'),
-  build: p => {
-    const yr = eraYr();
-    if (p.k === 'kor') return { title: "Biểu tình trong khuôn viên trường",
-      body: yr < 1980 ? "Một cuộc biểu tình phản đối Hiến pháp Yushin đang diễn ra trong trường. Biện pháp khẩn cấp số 9 trừng phạt cả những lời phê phán chế độ Yushin. Bạn bè cùng khoa rủ bạn cùng tham gia."
-        : yr === 1980 ? "Đây là “Mùa xuân Seoul”. Những cuộc biểu tình đòi dỡ bỏ thiết quân luật và công bố lộ trình dân chủ hóa đang lan từ trường học ra đường phố. Bạn bè cùng khoa rủ bạn cùng tham gia."
-        : "Một cuộc biểu tình phản đối chính quyền quân sự đang diễn ra trong trường. Cảnh sát mặc thường phục đi lại cả trong trường, và có tin đồn rằng ai bị bắt sẽ bị giam hoặc bị đuổi học. Bạn bè cùng khoa rủ bạn cùng tham gia.",
-      fact: yr < 1980 ? "Trong 589 vụ vi phạm biện pháp khẩn cấp, 191 vụ liên quan đến phong trào sinh viên, và 282 vụ chỉ vì những lời phê phán chế độ Yushin trong lúc uống rượu hay trong giờ học (Ủy ban Sự thật và Hòa giải Hàn Quốc)"
-        : yr <= 1984 ? "Từ tháng 9 năm 1980 đến tháng 11 năm 1984, 1.152 sinh viên từng tham gia biểu tình đã bị cưỡng ép nhập ngũ (Ủy ban làm rõ sự thật quá khứ của Bộ Quốc phòng Hàn Quốc)" : "Chỉ riêng vụ biểu tình chiếm giữ Đại học Konkuk tháng 10 năm 1986, 1.289 sinh viên đã bị bắt giam cùng lúc",
-      choices: [{ k: 'lead', label: "Đi đầu", sub: "Có thể bị bắt giam hoặc bị đuổi học" }, { k: 'join', label: "Theo sau cùng mọi người", sub: "Có thể bị bắt đi" }, { k: 'study', label: "Ở lại thư viện", sub: '' }] };
-    return { title: "Ra quảng trường?",
-      body: cityAt('CHN', 1) ? "Tháng 4, sau khi cựu Tổng Bí thư Hồ Diệu Bang qua đời, sinh viên tụ tập tại quảng trường Thiên An Môn, bắt đầu kêu gọi chấm dứt tham nhũng và đòi tự do báo chí. Tháng 5, cuộc tuyệt thực bắt đầu, và từ mọi trường học, từng đoàn người nối nhau kéo ra quảng trường."
-        : "Cuộc biểu tình của sinh viên bắt đầu từ quảng trường Thiên An Môn ở Bắc Kinh đã lan đến thành phố này. Từ mọi trường học, từng đoàn người nối nhau xuống đường.",
-      fact: "Tháng 5 năm 1989, các cuộc biểu tình lan ra khoảng 400 thành phố của Trung Quốc, và riêng ở Bắc Kinh đã có gần 1 triệu người xuống đường",
-      choices: [{ k: 'lead', label: "Ở lại quảng trường, cùng tuyệt thực", sub: "Có những người ở lại đến cùng" }, { k: 'join', label: "Cùng tham gia tuần hành", sub: '' }, { k: 'stay', label: "Ở lại trường", sub: '' }] };
-  },
-  apply: (k, p) => {
-    const yr = eraYr();
-    if (p.k === 'kor') {
-      const d = S.flags.hdK = { k, yr };
-      if (k === 'study') return { t: "Bạn ở lại thư viện. Qua khung cửa sổ, bạn thấy khói hơi cay bốc lên.", k: 'ev' };
-      if (k === 'join') {
-        if (chance(0.04)) { d.held = 1; eff({ h: -4, so: 1 }); return { t: "Bạn đi biểu tình, bị cảnh sát bắt đi và được thả sau vài ngày.", k: 'bad' }; }
-        eff({ so: 3, h: 1 }); return { t: "Bạn đứng sau bạn bè, cùng hô khẩu hiệu. Nước mắt giàn giụa vì khói hơi cay, cả nhóm tản vào các con hẻm.", k: 'big' };
-      }
-      if (!chance(0.2)) { eff({ so: 4, h: -1 }); return { t: "Bạn đi đầu hô khẩu hiệu trước cổng trường, cùng bạn bè chạy qua làn khói hơi cay.", k: 'big' }; }
-      const draft = S.sex === 'M' && !S.served && yr >= 1980 && yr <= 1984 && chance(0.4);
-      d.exp = yr; d.sy = S.schoolY; S.school = null; S.schoolY = 0;
-      if (draft) {
-        const cs = eraCS(C(), yr); d.dr = 1; S.serveLeft = Math.max(2, Math.round((cs && cs[0] || 30) / 12)); S.job = 'service'; S.done.service = 1; S.flags.svcDelay = null; S.yearMark = 'svc'; eff({ h: -10, so: -4, hl: -2 });
-        return { t: "Bạn bị bắt khi đang dẫn đầu cuộc biểu tình. Bạn bị đuổi học và lập tức bị đưa vào quân đội. Ở đơn vị, người ta liên tục yêu cầu bạn viết báo cáo về động tĩnh của bạn bè cùng trường.", k: 'bad',
-          f: "Từ tháng 9 năm 1980 đến tháng 11 năm 1984, 1.152 sinh viên từng tham gia biểu tình đã bị cưỡng ép nhập ngũ (Ủy ban làm rõ sự thật quá khứ của Bộ Quốc phòng Hàn Quốc)" };
-      }
-      d.jail = 1; polJail(chance(0.6) ? 1 : 2, 'kor'); S.flags.polRec = 1988;
-      return { t: "Bạn bị bắt giam khi đang dẫn đầu cuộc biểu tình. Nhà trường gửi giấy báo đuổi học.", k: 'bad' };
-    }
-    const bj = cityAt('CHN', 1), d = S.flags.hdC = { k };
-    if (k === 'stay') return { t: "Bạn ở lại trường. Ngày ngày, chiếc radio trong ký túc xá phát tin tức từ quảng trường.", k: 'ev' };
-    if (k === 'join') { eff({ so: 3, h: -4 }); return { t: (bj ? "Bạn cùng tham gia tuần hành. Người dân bên đường trao nước và bánh mì." : "Bạn cùng tham gia tuần hành trên phố. Người dân bên đường vẫy tay chào.") + ' ' + "Sau ngày 4 tháng 6, không ai còn nhắc đến chuyện mùa xuân năm ấy nữa.", k: 'bad' }; }
-    if (chance(0.12)) { d.jail = 1; polJail(ri(1, 3), 'chn'); S.flags.polRec = yr + 12; return { t: "Sau cuộc trấn áp ngày 4 tháng 6, bạn bị chỉ đích danh là một trong những người cầm đầu cuộc biểu tình và bị bắt.", k: 'bad' }; }
-    eff({ h: -10, so: 2 });
-    return { t: (bj ? "Bạn đã cùng tuyệt thực. Rạng sáng ngày 4 tháng 6, giữa tiếng súng, bạn rời khỏi quảng trường." : "Bạn đã cùng ngồi biểu tình ở quảng trường. Khi tin tức từ Bắc Kinh truyền đến, các cuộc biểu tình dừng lại.") + ' ' + "Mùa thu năm ấy, bạn phải viết bản khai chi tiết nộp cho nhà trường, rằng mùa xuân đó mình đã ở đâu và làm gì.", k: 'bad' };
-  }
-};
-DEC.histjunta = {
-  ok: () => (S.cur === 'ARG' || S.cur === 'CHL') && !S.mig,
-  build: () => {
-    const arg = S.cur === 'ARG', who = S.school === 'uni' ? "một người bạn cùng khoa" : S.job === 'teacher' ? "một đồng nghiệp dạy cùng trường" : "một người cùng công đoàn";
-    return { title: "Một người bạn đã bị bắt đi", body: L`새벽에 무장한 사람들이 ${who}의 집에 들이닥쳤고, 그 뒤로 아무도 그를 보지 못했습니다. 그의 수첩에 내 이름이 적혀 있었을지도 모릅니다.`,
-      fact: arg ? "Dưới chế độ quân sự Argentina giai đoạn 1976–1983, số người mất tích theo hồ sơ chính thức là 8.961 người, theo ước tính của các tổ chức nhân quyền là 30.000 người. Trong số người mất tích, 30% là công nhân, 21% là sinh viên, và 70% ở độ tuổi 16–30 (CONADEP, “Nunca Más”)"
-        : "Dưới chế độ Pinochet, khoảng 3.200 người bị giết hoặc mất tích, và khoảng 38.000 người bị giam giữ như tù chính trị và bị tra tấn (báo cáo Rettig và Valech)",
-      choices: [{ k: 'leave', label: "Rời khỏi đất nước", sub: "Lưu vong · không biết bao giờ mới về được" }, { k: 'hide', label: "Chuyển nhà, cắt đứt với nhóm", sub: "Sống lặng lẽ, ẩn mình" }, { k: 'stay', label: "Sống như trước", sub: '' }] };
-  },
-  apply: k => {
-    const arg = S.cur === 'ARG';
-    if (k === 'leave') {
-      const ds = (arg ? ['ESP', 'MEX', 'VEN', 'FRA', 'SWE', 'ITA'] : ['SWE', 'VEN', 'MEX', 'FRA', 'CAN', 'ESP']).filter(x => CBY[x]); const to = pick(ds);
-      emigrate(to, S.edu >= 4, false); S.flags.exile = arg ? 'arg76' : 'chl73'; eff({ h: -6, so: -6 });
-      return { t: L`며칠 만에 짐을 꾸려 ${ro(CBY[to].ko)} 떠났습니다. 언제 돌아갈 수 있을지 알 수 없었습니다.`, k: 'big' };
-    }
-    if (k === 'hide') eff({ so: -4, h: -3 });
-    if (chance((k === 'hide' ? 0.015 : 0.05) * (arg ? 1 : 1.5))) {
-      if (chance(arg ? 0.75 : 0.1)) { log("Không lâu sau, bạn cũng bị bắt đi giữa đêm.", 'bad'); die('pol', "bị chế độ quân sự cưỡng bức mất tích"); return false; }
-      eff({ h: -20, hl: -8, so: -6 });
-      return { t: "Không lâu sau, bạn cũng bị bắt đi. Bạn bị giam trong một trại bí mật suốt mấy tháng rồi mới được thả. Những gì xảy ra ở đó, rất lâu sau bạn vẫn không thể nói ra.", k: 'bad' };
-    }
-    return k === 'hide' ? { t: "Bạn chuyển sang khu phố khác và cắt đứt mọi liên lạc với nhóm. Đêm này qua đêm khác, bạn giật mình tỉnh giấc vì tiếng gõ cửa.", k: 'bad' }
-      : { t: "Bạn vẫn sống như trước. Mỗi lần có chiếc xe lạ chạy chậm qua, bạn lại nín thở.", k: 'bad' };
-  }
-};
-DEC.histkhm = {
-  ok: () => S.cur === 'KHM',
-  build: () => ({ title: "Angkar hỏi", body: "Tại cuộc họp làng, một cán bộ của “Angkar” lên tiếng: những ai từng đi học, từng là giáo viên, bác sĩ hay viên chức, hãy bước lên. Angkar sẽ giao việc mới, và ai muốn thì sẽ được đưa trở về Phnôm Pênh.",
-    fact: "Trong hơn 20.000 giáo viên ở Campuchia đầu thập niên 1970, mười năm sau chỉ còn khoảng 5.000 người (Library of Congress Country Studies)",
-    choices: [{ k: 'step', label: "Giơ tay bước lên", sub: "Nghe nói sẽ được giao việc mới" }, { k: 'hide', label: "Giả làm nông dân không biết chữ", sub: "Vứt kính đi, ít nói" }] }),
-  apply: k => {
-    if (k === 'hide') { eff({ h: -6, so: -3 }); return { t: "Bạn vứt cặp kính và giả làm một nông dân không biết chữ. Bạn ít nói, để không lộ ra mình là người có học.", k: 'bad' }; }
-    if (chance(0.6)) { log("Những người giơ tay bị chở đi trên những chiếc xe tải, và không bao giờ trở lại.", 'bad'); die('geno', "Cuộc thảm sát của Khmer Đỏ"); return false; }
-    eff({ h: -15, hl: -10, so: -6 }); return { t: "Bạn bị chở đi trên xe tải cùng những người đã giơ tay. Trong trại “cải tạo”, bạn sống sót qua nhiều năm lao động khổ sai.", k: 'bad' };
-  }
-};
 function eraPool(pool) {
   if (!eraOn()) return;
   const yr = eraYr();
@@ -2121,18 +1985,6 @@ function eraPool(pool) {
   if (S.flags.aiQ || !isWorking() || S.age > 60) return;
   const ai = aiK(S.job); if (ai && ai[1] >= 1.25 && aiT() >= 0.2 && chance(0.25)) pool.push(['aiwork', {}]);
 }
-DEC.aiwork = {
-  ok: () => isWorking(),
-  build: () => ({ title: "Cách làm việc đang thay đổi", body: L`회사에 AI 도구가 들어오면서 ${shortJob(S.job)} 일의 많은 부분을 기계가 하게 되었습니다. 같은 일을 하던 동료 몇 명은 이미 자리를 잃었습니다.`,
-    fact: "Trong số những việc làm chịu tác động của AI, khoảng một nửa có thể tăng năng suất nhờ AI, số còn lại có thể bị giảm bớt việc (IMF 2024)" + ' — ' + "dự báo",
-    choices: [{ k: 'learn', label: "Học cách dùng công cụ AI", sub: "Kiến thức↑ giữ việc làm" }, { k: 'move', label: "Thử chuyển sang nghề chăm sóc con người", sub: "tìm việc mới" }, { k: 'keep', label: "Làm như trước", sub: '' }] }),
-  apply: k => {
-    S.flags.aiQ = S.age;
-    if (k === 'learn') { S.flags.aiSkill = 1; eff({ sm: 4, h: -1 }); S.pct = Math.min(payTop(), S.pct + 0.02); return "Đêm nào bạn cũng học các công cụ mới. Công việc nhanh hơn hẳn."; }
-    if (k === 'move') { S.flags.aiMove = S.age; S.flags.huntAt = S.age; eff({ sm: 2 }); return "Bạn bắt đầu tìm hiểu các công việc trong lĩnh vực chăm sóc và y tế."; }
-    return false;
-  }
-};
 function eraNew(o) { S.era = o.era; S.by = o.by; S.eraF = ERA_F0(); }
 const artOK = c => { const y = eraYr(); return y == null || y >= (c.ppp > 15000 && c.p !== 'ssa' ? 1996 : 2004); };
 function eraLayText() {
@@ -2482,20 +2334,6 @@ function reflectMirror(a) {
   }
   return lines;
 }
-DEC.reflect = {
-  build: () => {
-    const a = S.age, r = pick(REFLECT_Q[a] || REFLECT_Q[30]), q = r[0](); S.flags.refQ = q;
-    return { title: L`잠시 멈춤 · ${a}세`, body: reflectMirror(a).join(' '), fact: compLine(a), q, ph: L`예: ${r[1]()} (적지 않아도 괜찮아요)`, input: true,
-      choices: [{ k: 'write', label: "Ghi lại rồi sống tiếp", sub: "Những gì bạn viết sẽ ở lại trong ghi chép của cuộc đời này" }, { k: 'skip', label: "Giữ trong lòng rồi sống tiếp", sub: '' }] };
-  },
-  apply: (k, p, text) => {
-    const t = (text || '').trim().slice(0, 200);
-    if (!t || k === 'skip') return false;
-    S.journal = S.journal || []; S.journal.push({ a: S.age, q: S.flags.refQ, t });
-    if (typeof crisisNote === 'function') setTimeout(() => crisisNote(t), 1500);
-    return { t: `“${t}”`, k: 'note' };
-  },
-};
 function reflectQuiet(a) { const t = reflectMirror(a).join(' '); if (t) log(t, 'ev', compLine(a)); }
 const DISH = { NGA: "cơm jollof", GHA: "cơm jollof", ETH: "bánh injera và món hầm wat", ERI: "bánh injera", IND: "đậu dal và bánh roti", PAK: "cơm biryani", BGD: "cà ri cá", NPL: "cơm dal bhat", LKA: "cơm và cà ri", CHN: "sủi cảo", TWN: "mì bò", VNM: "phở", KOR: "canh tương doenjang", PRK: "mì lạnh naengmyeon", JPN: "súp miso", THA: "súp tom yum", IDN: "cơm chiên nasi goreng", MYS: "cơm nasi lemak", PHL: "adobo", MMR: "bún mohinga", KHM: "amok", MEX: "bánh tamale", GTM: "bánh tamale", BRA: "feijoada", ARG: "thịt nướng asado", COL: "bánh arepa", VEN: "bánh arepa", PER: "ceviche", EGY: "koshari", MAR: "tagine", DZA: "couscous", TUN: "couscous", TUR: "súp đậu lăng", IRN: "ghormeh sabzi", IRQ: "dolma", SYR: "kibbeh", SAU: "cơm kabsa", YEM: "saltah", AFG: "cơm Kabuli pulao", UZB: "cơm plov", KAZ: "beshbarmak", RUS: "súp borscht", UKR: "súp borscht", POL: "bánh pierogi", ITA: "lasagna", FRA: "ratatouille", DEU: "súp khoai tây", ESP: "paella", GBR: "shepherd's pie", USA: "súp gà", COD: "fufu", CMR: "ndolé", KEN: "ugali", TZA: "ugali", UGA: "matoke", ZAF: "pap", ZWE: "sadza", MWI: "nsima", ZMB: "nsima", SEN: "thieboudienne", MLI: "thieboudienne", SDN: "ful medames", SOM: "cambuulo", CIV: "attiéké", HTI: "cơm đậu diri kole ak pwa", CUB: "ropa vieja", NER: "dambou", BFA: "tô", TCD: "boule", MDG: "romazava", AGO: "funge", MOZ: "matapa", HKG: "mì hoành thánh", HRV: "sarma", PRI: "cơm đậu arroz con gandules", BIH: "ćevapi", MDA: "mămăligă", ARM: "dolma", LTU: "cepelinai", ALB: "tavë kosi", SVN: "bánh potica", LVA: "đậu Hà Lan xám ăn kèm thịt xông khói", MKD: "tavče gravče", XKX: "bánh flija", BHR: "cơm machboos", TTO: "bánh doubles", EST: "bánh mì lúa mạch đen", CYP: "phô mai halloumi", MUS: "bánh dholl puri", DJI: "skoudehkaris", FJI: "kokoda", COM: "mataba", GUY: "pepperpot", BTN: "ema datshi", MAC: "minchi", LUX: "thịt lợn hun khói Judd mat Gaardebounen", MNE: "kačamak", SUR: "bánh roti", MLT: "bánh pastizzi", MDV: "mas huni", CPV: "cachupa" };
 const COOK_DAD_R = { hi: 0.3, eca: 0.22, lac: 0.26, eap: 0.24, ssa: 0.18, sa: 0.1, mena: 0.1 };
@@ -2545,13 +2383,6 @@ const WARM = [
 ];
 const WARM_MAX = { w_kidlove: 2 };
 const JOYS = new Set(['w_oldfriends', 'w_thanks', 'w_table', 'w_neighborkid', 'w_learn', 'w_view', 'w_help', 'w_kidcall', 'w_kidgift', 'w_harvest', 'w_morning', 'w_mentor']);
-for (const e of WARM) {
-  const c0 = e.c, r0 = e.run, mx = WARM_MAX[e.id] || 1, key = 'wm_' + e.id;
-  const joy = JOYS.has(e.id);
-  e.c = () => (S.flags[key] || 0) < mx && S.flags.wmY !== S.age && (!joy || S.flags.wjA == null || S.age - S.flags.wjA >= 5) && (!c0 || c0());
-  e.run = () => { S.flags[key] = (S.flags[key] || 0) + 1; S.flags.wmY = S.age; if (joy) S.flags.wjA = S.age; return r0(); };
-  EVENTS.push(e); EVMAP[e.id] = e;
-}
 const OJ_P = 0.2, OJ_GAP = 2;
 const ojPt = () => { const P = S.fam.partner; return S.fam.married && P && P.alive && !P.divorced && !ptAway() ? P : null; };
 const ojKids = () => S.fam.kids.some(k => k.alive);

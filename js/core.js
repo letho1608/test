@@ -101,7 +101,6 @@ const famAnywhere = () => famNear() || (S.fam.married && S.fam.partner && S.fam.
 const wa = w => w;
 const listAnd = ws => ws.length < 2 ? ws.join('') : ws.slice(0, -1).join(', ') + ' và ' + ws[ws.length - 1];
 const CBY = {};
-COUNTRIES.forEach(c => { CBY[c.id] = c; });
 const WORLD_C = { id: 'WLD', ko: "Trung bình thế giới", le: 73.2, gap: 5.4, u5: 37, im: 28 };
 const LT_CACHE = {};
 const OLDEST = (x, sex) => Math.min(0.7, (sex === 'F' ? 0.39 : 0.5) * Math.exp(0.15 * (x - 100)));

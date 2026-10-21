@@ -947,7 +947,6 @@ const ETH_C = { USA: ['us_hisp', 'us_asian', 'us_black', 'us_native'], CAN: ['ca
   VNM: ['vn_min'], THA: ['th_malay', 'th_hill'], IND: ['in_adiv'], MEX: ['mx_ind'], GTM: ['gt_maya'], BOL: ['bo_ind'], PER: ['pe_ind'],
   ECU: ['ec_ind', 'ec_afro'], COL: ['co_afro', 'co_ind'], BRA: ['br_negro'], CHL: ['cl_mapu'], TUR: ['tr_kurd'], RUS: ['ru_turk'], ISR: ['il_arab'],
   LKA: ['lk_tamil'], MYS: ['my_chin', 'my_ind'], ZAF: ['za_ind', 'za_white', 'za_col', 'za_black'], MMR: ['mm_roh'], BGD: ['bd_roh'] };
-for (const iso in ROMA_S) (ETH_C[iso] = ETH_C[iso] || []).push('roma');
 const ethShare = (g, iso) => g === 'roma' ? ROMA_S[iso] || 0 : ETH_G[g].sh != null ? ETH_G[g].sh : ETH_G[g].s || 0;
 const ETH_T = { es: "tiếng Tây Ban Nha", zh: "tiếng Trung", mi: "tiếng Maori", ur: "tiếng Urdu", hi: "tiếng Hindi", ar: "tiếng Ả Rập", tr: "tiếng Thổ Nhĩ Kỳ", rom: "tiếng Romani", ko: "tiếng Hàn",
   ms: "tiếng Mã Lai", ta: "tiếng Tamil", ku: "tiếng Kurd", arn: "tiếng Mapudungun", af: "tiếng Afrikaans", ug: "tiếng Duy Ngô Nhĩ", bo: "tiếng Tây Tạng", roh: "tiếng Rohingya" };

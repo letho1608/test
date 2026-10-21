@@ -1619,7 +1619,7 @@ html, body {
 
 .cockpit-grid {
   display: grid;
-  grid-template-columns: 360px minmax(0, 1fr);
+  grid-template-columns: 380px minmax(0, 1fr);
   grid-template-rows: minmax(min-content, 1fr) auto;
   grid-template-areas:
     "ctrl map"
@@ -1630,6 +1630,9 @@ html, body {
   min-height: 0;
   overflow: hidden;
 }
+.cockpit-panel:nth-child(1) { grid-area: ctrl; }
+.cockpit-panel:nth-child(2) { grid-area: map; }
+.cockpit-panel:nth-child(3) { grid-area: demo; }
 .cockpit-panel:nth-child(1) { grid-area: ctrl; }
 .cockpit-panel:nth-child(2) { grid-area: map; }
 .cockpit-panel:nth-child(3) { grid-area: demo; }
@@ -1745,23 +1748,22 @@ html, body {
 .param-buttons {
 
   display: flex;
-  gap: 5px;
+  gap: 4px;
 
 }
 .param-buttons button {
-
   flex: 1;
-  padding: 8px 8px;
+  padding: 8px 6px;
   border: 1px solid var(--rule);
   background: var(--paper);
   color: var(--ink);
   font-family: var(--f-mono);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   text-align: center;
   transition: all 0.15s ease;
-
+  white-space: nowrap;
 }
 .param-buttons button:hover {
   background: var(--card2);
@@ -1920,9 +1922,12 @@ html, body {
 }
 .owid-odds-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   column-gap: 30px;
   align-content: start;
+}
+@media (max-width: 1100px) {
+  .owid-odds-list { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
 }
 .btn-all-cty {
 

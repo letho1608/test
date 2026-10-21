@@ -742,9 +742,7 @@ function setReflect(on) {
   if (S && S.phase === 'life') renderTop();
   toast(on ? "Ở tuổi 5, 15, 30, 50 và 70, cuộc đời sẽ tạm dừng để bạn ghi lại suy nghĩ." : "Đã tắt cửa sổ ghi suy nghĩ. Câu chuyện ở những tuổi ấy sẽ được lưu thành một dòng trong Ghi chép cuộc đời. Chạm vào '✎ Ghi suy nghĩ' để bật lại.");
 }
-HOOK.noPause = () => UI.prefs.reflect === false;
 const HUM_KEY = 'one8b.hum.v1';
-HOOK.humRecent = () => { const v = lsGet(HUM_KEY, []); return Array.isArray(v) ? v.flat().filter(x => typeof x === 'string') : []; };
 function humRemember() { try { if (!S || S.replay || !S.done) return; const mine = Object.keys(HUM).concat(typeof SMALL !== 'undefined' ? Object.keys(SMALL) : []).filter(id => S.done[id]); const v = lsGet(HUM_KEY, []); lsSet(HUM_KEY, [mine].concat(Array.isArray(v) ? v.filter(Array.isArray) : []).slice(0, 2)); } catch (e) { } }
 function decPeek(on) {
   const p = $('#decPeek'); if (!p) return;
@@ -833,7 +831,6 @@ const CRISIS_RE = /(\bi\s*(really\s*|just\s*)?(want|wanna)\s*(to\s*)?die\b|\bkil
 const CALM_KEY = 'one8b.calm.v1', CALM_MS = 30 * 864e5;
 let CALM_AT = null;
 function calmMark() { CALM_AT = Date.now(); try { localStorage.setItem(CALM_KEY, String(CALM_AT)); } catch (e) { } }
-HOOK.calm = () => { if (CALM_AT == null) { let v = 0; try { v = +localStorage.getItem(CALM_KEY) || 0; } catch (e) { } CALM_AT = v; } return Date.now() - CALM_AT < CALM_MS; };
 function crisisNote(t) {
   if (!t || !CRISIS_RE.test(String(t).normalize('NFC').toLowerCase())) return;
   calmMark();
@@ -1434,8 +1431,6 @@ function storeNote() {
     + (ios ? ' ' + "Trên iPhone và iPad, trình duyệt có thể xóa ghi chép nếu bạn không ghé trang này quá 7 ngày." : macSafari ? ' ' + "Safari có thể xóa ghi chép nếu bạn không ghé trang này quá 7 ngày." : '');
 }
 const A2 = { evt: null, seen: false, watch: null, endAt: null };
-addEventListener('beforeinstallprompt', e => { e.preventDefault(); A2.evt = e; a2Render(); });
-addEventListener('appinstalled', () => { A2.evt = null; UI.prefs.a2hs = 'done'; lsSet(PREF_KEY, UI.prefs); track('a2hs', { kind: 'installed' }); a2Render(); });
 function a2Way() {
   if (STANDALONE) return '';
   if (A2.evt) return 'prompt';
@@ -2418,51 +2413,3 @@ function friendLine() {
   if (m[1] === 'b' && p.length >= 3 && /^\d{1,6}$/.test(p[2])) return L`누군가 방금 ${placeOf(p[1])}에서 ${ro(sexOf(p[0]))} 태어났어요. 지금 태어나는 아기 ${(+p[2]).toLocaleString('vi-VN')}명 중 1명꼴이에요. 당신은 어디서 태어날까요?`;
   return '';
 }
-HOOK.log = e => { if (UI.view === 'lifeview') { addFeed(e); if (e.egg && S && !S.isComp) toast("Bạn đã tìm thấy một bất ngờ được giấu kín (easter egg)! Ngoài đời thật, đây cũng là khoảnh khắc rất hiếm có.", 4600); } };
-HOOK.change = () => { UI.dirty = true; };
-HOOK.decision = pd => { try { showDecision(pd); } catch (e) { reportCaught(e); if (S) S.pending = null; $('#modal').hidden = true; } };
-HOOK.err = e => reportCaught(e);
-HOOK.death = () => {
-  try { if (!S.replay && S.bxAvoid == null && typeof bxRecent === 'function') S.bxAvoid = bxRecent(); } catch (e) { }
-  try { if (!S.endD) S.endD = endingData(); } catch (e) { reportCaught(e); }
-  try { recordLife(); lsDel(SAVE_KEY); } catch (e) { reportCaught(e); }
-  // Vô Hạn Lưu: Calculate and Save Soul Karma for Next Life (Pillar 6)
-  try {
-    let karmaPts = 1;
-    let karmaType = 'resilience';
-    let karmaTitle = 'Ý chí Kiên định';
-    if (S.age >= 60) karmaPts += 2;
-    if (S.age >= 80) karmaPts += 3;
-    if (S.money > 50000000) { karmaPts += 2; karmaType = 'wealth'; karmaTitle = 'Khứu giác Kim tiền'; }
-    if (S.edu >= 4 || S.st.sm >= 75) { karmaPts += 2; karmaType = 'scholar'; karmaTitle = 'Tuệ căn Sáng suốt'; }
-    if (S.st.so >= 75 || (S.fam.kids && S.fam.kids.length >= 2)) { karmaPts += 2; karmaType = 'social'; karmaTitle = 'Duyên lành Gia tộc'; }
-    if (S.flags.vhts_startup_done || S.flags.vhts_legacy_done) karmaPts += 2;
-    if (S.job === 'doctor' || S.job === 'nurse' || S.flags.vhts_care_elder) { karmaType = 'healer'; karmaTitle = 'Bàn tay Chữa lành'; }
-    if (S.cultivation) {
-      karmaPts += (S.cultivation.stage * 3);
-      karmaType = 'dao';
-      karmaTitle = S.cultivation.stage >= 3 ? 'Kim Đan Tiên Tông' : S.cultivation.stage >= 2 ? 'Trúc Cơ Tiên Giả' : 'Khai Khiếu Đạo Giả';
-    }
-
-    const soulData = {
-      pts: karmaPts,
-      type: karmaType,
-      title: karmaTitle,
-      lastAge: S.age,
-      lastCountry: S.cur,
-      lastName: S.name ? S.name.full : 'Vô Danh',
-      time: Date.now()
-    };
-    localStorage.setItem('vhts_soul_karma', JSON.stringify(soulData));
-    S.generatedKarma = soulData;
-  } catch (e) { console.error('Soul Karma calculation error:', e); }
-  setTimeout(() => {
-    try { showDeath(); } catch (e) { reportCaught(e); deathFallback(); return; }
-    const after = () => { window.scrollTo(0, 0); const h0 = $('#dead h1, #dead h2, #dead button'); if (h0) h0.focus({ preventScroll: true }); if (S && !S.replay && !EDU_ON && !S.flags.sharePop && !(S.deathAt && S.deathAt.cause === 'suic')) { S.flags.sharePop = 1; setTimeout(() => { if (UI.view === 'dead' && $('#sheet').hidden) shareSheet(true); }, 500); } };
-    if (S.endD) playEnding(S.endD, { after }).catch(e => { reportCaught(e); closeEnding(); });
-  }, 900);
-};
-HOOK.year = () => { UI.dirty = true;
-  if (S && S.age === 6 && S.phase === 'life' && !S.flags.p6 && !S.replay && !UI.prefs.auto && UI.prefs.foUsed && (S.speed >= 8 || S.ff) && focusOptions().length) {
-    S.flags.p6 = 1; S.paused = true; S.ff = false; try { renderTop(); } catch (e) { } toast("Bạn đã sáu tuổi. Hãy chọn năm nay dành cho điều gì rồi tiếp tục.", 5000); }
-  save(); if (S && [5, 15, 40, 65].includes(S.age)) track('life_progress', { age: S.age, auto: !!UI.prefs.auto }); };

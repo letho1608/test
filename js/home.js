@@ -154,15 +154,6 @@ async function wishPicture() {
   } catch (e) { reportCaught(e); toast("Hiện chưa thể tạo ảnh. Hãy thử lại sau ít phút."); }
   WS.picBusy = false;
 }
-document.addEventListener('click', e => {
-  const t = e.target.closest && e.target.closest('button'); if (!t) return;
-  if (t.dataset.wishgo != null) wishSheet(t.dataset.wishgo);
-  else if (t.id === 'wshGo') wishStart();
-  else if (t.dataset.wsh != null) wishPick(+t.dataset.wsh);
-  else if (t.id === 'wshBack') { if (typeof WS.step === 'number' && WS.step > 0) { WS.step--; wishDraw(); } }
-  else if (t.id === 'wshAgain') wishStart();
-  else if (t.id === 'wshPic') wishPicture();
-});
 const PS = { o: null };
 const wishUrl = key => location.origin + LP + '/s/w-' + key;
 function picShareSheet(o) {
@@ -194,14 +185,6 @@ function psImg() {
   const o = PS.o, p = o && o.pic; if (!p || !p.file) return;
   navigator.share({ files: [p.file], text: o.text }).then(() => track('card_share', { kind: o.kind + '_img' })).catch(e => { if (!e || e.name !== 'AbortError') psSave(); });
 }
-document.addEventListener('click', e => {
-  const a = e.target.closest && e.target.closest('a[data-ps]');
-  if (a && PS.o) { track('card_share', { kind: PS.o.kind + '_' + a.dataset.ps }); return; }
-  const t = e.target.closest && e.target.closest('button'); if (!t || !PS.o) return;
-  if (t.id === 'psImg') psImg();
-  else if (t.id === 'psSave') psSave();
-  else if (t.id === 'psCopy') { copyText(PS.o.text, L`글과 링크를 복사했어요. ${pasteWhere()} 붙여넣어 주세요.`); track('card_share', { kind: PS.o.kind + '_copy' }); }
-});
 const KEEP_KEY = 'one8b.keep.v1';
 const KP = { armed: '', busy: false, mem: {} };
 function keepGet() { let v = null; try { v = JSON.parse(localStorage.getItem(KEEP_KEY) || 'null'); } catch (e) { } return v && (v.at || 0) >= (KP.mem.at || 0) ? v : Object.assign({}, KP.mem); }
@@ -730,9 +713,6 @@ const CHANGELOG_ZH = [];
 const CHANGELOG_JA = [];
 const CHANGELOG_EN = [];
 const CHANGELOG = [];
-(function copyNote() {
-  // Disclaimers disabled permanently
-})();
 const REPL_KEY = 'one8b.repl.v1';
 const ageBand = a => { a = +a || 0; return a < 5 ? '0' : a < 15 ? '5' : a < 40 ? '15' : a < 65 ? '40' : '65'; };
 const FRIEND_PATH = (location.pathname.match(/^\/(?:[a-z]{2}\/)?s\/([a-z0-9-]{4,40})$/i) || [])[1] || '';
@@ -770,9 +750,6 @@ function track(name, props) {
     } catch (e) { }
 }
 const UI = { prefs: Object.assign({ mode: 'birth', pace: 60 }, lsGet(PREF_KEY, {})), view: 'intro', dirty: true, feedCount: 0, t0: performance.now() };
-delete UI.prefs.edu;
-try { lsSet(PREF_KEY, UI.prefs); } catch(e){}
-EDU_ON = false;
 const EDU_T = false;
 const TOTAL_BIRTHS = COUNTRIES.reduce((s, c) => s + c.b, 0);
 const TOTAL_POP = COUNTRIES.reduce((s, c) => s + c.pop, 0);
