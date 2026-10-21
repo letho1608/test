@@ -67,8 +67,8 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 .odds p.sub { margin: 0 0 14px; font-size: 13px; color: var(--ink3); text-wrap: pretty; }
 .orow {
  display: grid; grid-template-columns: 8.5em 1fr 3.4em; gap: 10px; align-items: center; font-size: 14px; padding-block: 3px; 
-  font-size: 15px;
-  padding-block: 5px;
+  font-size: 14px;
+  padding-block: 3px;
 }
 .orow .bar { height: 8px; background: var(--rule2); border-radius: 1px; overflow: hidden; }
 .orow .bar i { display: block; height: 100%; background: var(--stamp); }
@@ -1620,7 +1620,7 @@ html, body {
 .cockpit-grid {
   display: grid;
   grid-template-columns: 380px minmax(0, 1fr);
-  grid-template-rows: minmax(min-content, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto;
   grid-template-areas:
     "ctrl map"
     "demo demo";
@@ -1633,7 +1633,10 @@ html, body {
 .cockpit-panel:nth-child(1) { grid-area: ctrl; }
 .cockpit-panel:nth-child(2) { grid-area: map; }
 .cockpit-panel:nth-child(3) { grid-area: demo; }
-.cockpit-panel:nth-child(1) { grid-area: ctrl; }
+.cockpit-panel:nth-child(1) {
+ grid-area: ctrl; 
+  overflow: hidden;
+}
 .cockpit-panel:nth-child(2) { grid-area: map; }
 .cockpit-panel:nth-child(3) { grid-area: demo; }
 @media (max-width: 1100px) {
@@ -1674,6 +1677,9 @@ html, body {
   overflow: hidden;
 
 }
+.param-pair { display: flex; gap: 14px; }
+.param-pair .param-row { flex: 1 1 0; min-width: 0; }
+.curse-row { margin: 6px 0 0; padding: 4px 7px; border: 1px dashed var(--stamp); color: var(--stamp); font-family: var(--f-mono); font-size: 11px; line-height: 1.4; }
 
 /* Col 1 Scrollable */
 .cockpit-panel:nth-child(1) {
@@ -1699,11 +1705,11 @@ html, body {
 .cockpit-title {
 
   font-family: var(--f-display);
-  font-size: 32px;
+  font-size: 25px;
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.02em;
-  margin: 4px 0 8px;
+  margin: 0 0 5px;
   color: var(--ink);
   flex: none;
 
@@ -1713,28 +1719,28 @@ html, body {
   font-weight: 400;
 }
 .cockpit-sub {
-  font-size: 13.5px;
+  font-size: 12px;
   line-height: 1.4;
   color: var(--ink);
   margin: 0 0 8px;
   flex: none;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
 }
 
 .cockpit-params {
-
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 16px;
-  flex: none;
-
+  gap: 7px;
+  margin-bottom: 12px;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  min-height: 0;
 }
 .param-row {
 
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 
 }
 .param-label {
@@ -1753,7 +1759,7 @@ html, body {
 }
 .param-buttons button {
   flex: 1;
-  padding: 8px 6px;
+  padding: 6px 6px;
   border: 1px solid var(--rule);
   background: var(--paper);
   color: var(--ink);
@@ -1775,21 +1781,23 @@ html, body {
 }
 
 .cockpit-actions {
+
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   margin-top: auto;
   flex: none;
+
 }
 .btn-launch {
 
   width: 100%;
-  padding: 15px 16px;
+  padding: 12px 16px;
   background: var(--accent) !important;
   color: var(--accent-ink) !important;
   border: 1px solid var(--accent) !important;
   font-family: var(--f-display);
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 800;
   letter-spacing: 0.05em;
   cursor: pointer;
@@ -1932,11 +1940,11 @@ html, body {
 .btn-all-cty {
 
   width: 100%;
-  padding: 9px;
+  padding: 7px;
   border: 1px solid var(--rule);
   background: var(--paper);
   font-family: var(--f-mono);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--ink);
   cursor: pointer;

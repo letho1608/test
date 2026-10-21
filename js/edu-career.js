@@ -127,6 +127,14 @@ function scheduledDecisions() {
   if (S.flags.kidWedQ && S.flags.kidWedQ.length) add('kidwed', { i: S.flags.kidWedQ.shift() });
   { const k = S.fam.kids.find(k => k.alive && k.oTell != null && !k.oTold && a - k.bornAt >= k.oTell); if (k && !farFromNK()) add('kidout', { i: S.fam.kids.indexOf(k) }); }
   if (a === 2) add('temper');
+  if (a === 26) add('hd_hardwork');
+  if (a === 19) add('hd_school');
+  if (a === 30) add('hd_migrate');
+  if (a === 44) add('hd_care');
+  if (a === 62) add('hd_last');
+  if (a === 41) add('hd_child_fut');
+  if (a === 35 && 'IBH'.indexOf(S.rel || '') >= 0) add('hd_ritual');
+  if (a === 22 && S.curse) add('hd_dark');
   if (a === 6) { if (ddLv() >= 2) ddSchoolStart(C()); else startSchool(); }
   if (a === 8 && !S.school && S.edu === 0 && !S.done.noschool) add('noschool');
   if (ddLv() >= 2 && (S.flags.justGrad === 'prim' || S.flags.justGrad === 'lsec' || S.flags.justGrad === 'usec' || S.flags.justGrad === 'voc')) { ddSchoolNext(C(), S.flags.justGrad); S.flags.justGrad = null; }

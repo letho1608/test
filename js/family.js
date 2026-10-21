@@ -1679,6 +1679,8 @@ function deathProb() {
   const c = C(), a = S.age, lt = LT();
   let q = a >= 110 ? lt.q[109] : lt.q[a];
   let m = 1;
+  m *= HARD_K();
+  m *= 1 + curseMort();
   const off = 6 + (a < 15 ? c.u5 / 20 : 0) + (a > 50 ? (a - 50) * 0.08 : 0);
   m *= Math.max(0.5, Math.exp((expHealth(a) - off - S.st.hl) * (a < 5 ? 0.02 : 0.03)));
   const g = MORT_G[c.p];

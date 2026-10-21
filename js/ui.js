@@ -185,6 +185,8 @@ function renderId() {
   renderPortrait();
   $('#idName').innerHTML = nameHTML(S.name);
   $('#idDl').innerHTML = idRows().map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+  const cr = $('#idCurse');
+  if (cr) { if (S.curse) { cr.hidden = false; cr.innerHTML = `<b>LỜI NGUYỀN:</b> ${esc(S.curse.n)} — ${esc(S.curse.d)}`; } else cr.hidden = true; }
   $('#mrz').innerHTML = mrz();
   $('#idG').innerHTML = guilloche(320, 220);
 }
@@ -1637,6 +1639,8 @@ function bind() {
     if (t.closest('#moreMenu') && !t.dataset.music) setTimeout(() => moreMenu(false), 0);
     if (t.dataset.mode) { UI.prefs.mode = t.dataset.mode; renderIntro(); lsSet(PREF_KEY, UI.prefs); }
     else if (t.dataset.era) { if (t.dataset.era === 'any') UI.prefs.eraAny = 1; else { UI.prefs.eraAny = 0; UI.prefs.era = t.dataset.era; } renderIntro(); lsSet(PREF_KEY, UI.prefs); }
+    else if (t.dataset.hard) { UI.prefs.hard = +t.dataset.hard; renderIntro(); lsSet(PREF_KEY, UI.prefs); }
+    else if (t.dataset.curse) { UI.prefs.curse = t.dataset.curse === '1' ? 1 : 0; renderIntro(); lsSet(PREF_KEY, UI.prefs); }
     else if (t.dataset.pace) { UI.prefs.pace = +t.dataset.pace; renderIntro(); lsSet(PREF_KEY, UI.prefs); }
     else if (t.id === 'startBtn' || t.id === 'startBtn2') { const g = $('#guard'); if (g) g.hidden = true; startNewLife(); }
     else if (t.id === 'againBtn' || t.id === 'dfAgain' || t.id === 'eduAgain') startNewLife();

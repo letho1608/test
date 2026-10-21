@@ -81,6 +81,24 @@
               <select id="homeSel" class="sel" style="width: 100%; padding: 7px 8px; font-family: var(--f-mono); font-size: 13px;"></select>
             </div>
 
+            <div class="param-row">
+              <span class="param-label">5. Mức độ khắc nghiệt:</span>
+              <div class="param-buttons" role="group" aria-label="Mức độ khắc nghiệt của cuộc đời">
+                <button data-hard="0" aria-pressed="true">Chuẩn</button>
+                <button data-hard="1" aria-pressed="false">Khắc nghiệt</button>
+                <button data-hard="2" aria-pressed="false">Tàn khốc</button>
+              </div>
+            </div>
+
+            <div class="param-row">
+              <span class="param-label">6. Định mệnh:</span>
+              <div class="param-buttons" role="group" aria-label="Chế độ ma mắn">
+                <button data-curse="0" aria-pressed="true">Bình thường</button>
+                <button data-curse="1" aria-pressed="false">Mắt xét (ma mắn)</button>
+              </div>
+            </div>
+            <p class="optgroup-hint" id="hardHint" style="font-size:11.5px;color:var(--ink3);margin:2px 0 0;line-height:1.4;"></p>
+
             <div class="erayr" id="eraYrRow" hidden style="margin-top: 2px;">
               <label for="eraYr" style="font-family: var(--f-mono); font-size: 12px; margin-right: 6px;">Năm sinh mục tiêu:</label>
               <select id="eraYr" class="sel" style="padding: 6px 8px; font-family: var(--f-mono); font-size: 13px;"></select>
@@ -247,7 +265,7 @@
           <div class="top" id="idTop"></div>
           <div class="in">
             <div class="portrait" id="portrait"></div>
-            <div style="min-width:0"><div class="nm" id="idName"></div><dl id="idDl"></dl></div>
+            <div style="min-width:0"><div class="nm" id="idName"></div><dl id="idDl"></dl><p class="curse-row" id="idCurse" hidden></p></div>
           </div>
           <div class="mrz" id="mrz"></div>
         </div>

@@ -749,7 +749,29 @@ function track(name, props) {
   try {
     } catch (e) { }
 }
-const UI = { prefs: Object.assign({ mode: 'birth', pace: 60 }, lsGet(PREF_KEY, {})), view: 'intro', dirty: true, feedCount: 0, t0: performance.now() };
+const UI = { prefs: Object.assign({ mode: 'birth', pace: 60, hard: 0, curse: 0 }, lsGet(PREF_KEY, {})), view: 'intro', dirty: true, feedCount: 0, t0: performance.now() };
+const HARD_LV = () => Math.max(0, Math.min(2, +(UI.prefs.hard || 0)));
+const HARD_K = () => 1 + 0.45 * HARD_LV();
+const HARD_MONEY = () => 1 + 0.22 * HARD_LV();
+const CURSE_ON = () => !!UI.prefs.curse;
+const HARD_DESC = () => [
+  "Một cuộc đời bình thường: bệnh tật, tai nạn và nghèo đo đúng với thực tế.",
+  "Đời sống khắc nghiệt: bệnh nặng hơn, tai nạn dễ xảy ra hơn, mọi lớp đệm an toàn mỏng đi.",
+  "Tàn khốc: tử vong đến gần gấp đôi, thu nhập bị bào mòn, và gia đình không đỡ nổi nhiều như trước."][HARD_LV()];
+const CURSES = [
+  { id: 'eye', n: "Con mắt thứ ba", d: "Bạn nhìn thấy thứ mà người khác không thấy — và đôi khi chúng cũng nhìn thấy bạn.", hl: -8, h: -4, mort: 0.12, ev: 'eye' },
+  { id: 'cold', n: "Bàn tay lạnh", d: "Tay bạn luôn lạnh, kể cả giữa mùa hè. Bác sĩ không tìm ra lý do.", hl: -4, h: -8, mort: 0.08, ev: 'cold' },
+  { id: 'hunger', n: "Cơn đói không dứt", d: "Bạn luôn đói, dù vừa ăn no. Cơ thể bạn đốt cháy nhanh hơn người khác.", h: -3, mort: 0.06, money: -0.15, ev: 'hunger' },
+  { id: 'name', n: "Người gọi tên khác", d: "Không ai nhớ đúng tên của bạn. Giấy tờ, hồ sơ, giấy tờ tạm trú — tất cả đều sai.", hl: -6, mort: 0.05, ev: 'name' },
+  { id: 'shadow', n: "Cái bóng đi trước", d: "Cái bóng của bạn luôn di chuyển trước, chỉ một nhịp.", hl: -10, mort: 0.10, ev: 'shadow' },
+  { id: 'debt', n: "Món nợ của người khác", d: "Bạn sinh ra đã mang nợ của người khác. Không ai giải thích nợ nào.", money: -0.3, hl: -5, ev: 'debt' },
+  { id: 'mirror', n: "Khuôn mặt trong gương trễ hơn", d: "Khi bạn cười, người trong gương cười chậm hơn một nhịp.", hl: -7, mort: 0.09, ev: 'mirror' },
+  { id: 'bell', n: "Tiếng chuông trước", d: "Trước khi có chuyện xấu xảy ra, bạn nghe thấy một tiếng chuông rất xa.", hl: -4, mort: 0.14, ev: 'bell' },
+  { id: 'year', n: "Năm bị mất một ngày", d: "Mỗi năm trôi qua, bạn mất một ngày mà không ai giải thích vì sao.", h: -2, mort: 0.07, ev: 'year' },
+  { id: 'child', n: "Đứa trẻ không tên", d: "Có một đứa trẻ đi cùng bạn từ khi bạn sinh ra, nhưng không ai khác nhìn thấy.", hl: -6, ev: 'child' }
+];
+const cursePick = () => { const c = pick(CURSES); return c; };
+const curseMort = () => (S.curse && S.curse.mort ? S.curse.mort : 0);
 const EDU_T = false;
 const TOTAL_BIRTHS = COUNTRIES.reduce((s, c) => s + c.b, 0);
 const TOTAL_POP = COUNTRIES.reduce((s, c) => s + c.pop, 0);
@@ -829,6 +851,10 @@ function renderIntro() {
   const om = $('.oddsmore'); if (om) { if (om.dataset.t0 == null) om.dataset.t0 = om.textContent; om.textContent = ek === 'past' || UI.prefs.eraAny ? L`${COUNTRIES.length}개국의 지금 통계 보기` : om.dataset.t0; }
   for (const b of document.querySelectorAll('[data-mode]')) b.setAttribute('aria-pressed', String(b.dataset.mode === UI.prefs.mode));
   for (const b of document.querySelectorAll('[data-pace]')) b.setAttribute('aria-pressed', String(+b.dataset.pace === UI.prefs.pace));
+  for (const b of document.querySelectorAll('[data-hard]')) b.setAttribute('aria-pressed', String(+b.dataset.hard === HARD_LV()));
+  for (const b of document.querySelectorAll('[data-curse]')) b.setAttribute('aria-pressed', String(!!b.dataset.curse === CURSE_ON()));
+  const hh = $('#hardHint');
+  if (hh) hh.textContent = HARD_DESC() + (CURSE_ON() ? " Chế độ Mắt xét: mỗi kiếp người sẽ mang một Lời nguyền, và những sự kiện tối sẽ xuất hiện nhiều hơn." : "");
   const sv = lsGet(SAVE_KEY, null);
   const rb = $('#resumeBtn');
   if (sv && sv.S && (sv.S.phase === 'life' || sv.S.phase === 'birth') && CBY[sv.S.cur] && !(EDU_ON && !sv.S.eduOn)) {

@@ -525,6 +525,7 @@ function newLife(mode = 'birth', paceMin = 60, forceIso, o) {
     log: [], years: [], queue: [], pending: null, recent: [], flags: {}, done: {}, deathAt: null,
     stats: { maxIncome: 0, maxPct: 0, kidsBorn: 0, kidsLost: 0, moves: 0, decisions: 0 },
   };
+  S.curse = CURSE_ON() ? cursePick() : null;
   if (EDU_ON) S.eduOn = 1;
   ageSync();
   if (era) eraNew({ era, by });
@@ -707,7 +708,8 @@ const SHOP_ACT = { own_house: 'home', own_car: 'car', own_moto: 'car:moto', dinn
 const griefFar = who => farFromNK() || (S.cur !== S.born && !famCame() && !(who && (S.flags.parCame != null || S.flags.careHome === who)));
 function grieve(r, n) { if (!S || !n) return; const g = S.flags.grief || (S.flags.grief = []); g.push({ r, n, at: S.age }); if (g.length > 12) g.shift(); }
 function eff(d) {
-  const st = S.st;
+  const st = S.st, hk = HARD_K();
+  if (hk > 1) { d = Object.assign({}, d); for (const k of ['hl', 'h', 'so']) if (d[k] < 0) d[k] = d[k] * hk; }
   for (const k of ['hl', 'h', 'so']) if (d[k]) st[k] = clamp(st[k] + d[k], 0, 100);
   if (d.sm) knowAdd(d.sm);
   if (d.money) S.money += d.money;
@@ -1889,6 +1891,7 @@ function chooseFeed(used) {
     if (ev.c && !ev.c()) continue;
     if (ev.gap && S.flags['ev_' + ev.id] != null && S.age - S.flags['ev_' + ev.id] < ev.gap) continue;
     let wt = typeof ev.w === 'function' ? ev.w() : (ev.w || 1);
+    if (ev.dark) wt *= 1 + 0.5 * HARD_LV();
     if (S.recent.includes(ev.id)) wt *= ev.rep ? 0.5 : 0.08;
     if (wt > 0) w[ev.id] = wt;
   }

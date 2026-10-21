@@ -1,5 +1,80 @@
 // js/decisions.js - Bang quyet dinh (DEC)
 const DEC = {
+  hd_hardwork: {
+    build: () => {
+      if (!isWorking() || S.flags.hdHard) return null;
+      return { title: "Sếp gọi bạn lại: thêm ca, thêm lương, thêm hai tiếng mỗi ngày.",
+        body: ["Bạn cần tiền. Bạn cũng cần sức khỏe. Cả hai không thể có cùng lúc — nhưng sếp không quan tâm điều đó."],
+        fact: "WHO ước tính khoảng 55 triệu ca tử vong mỗi năm liên quan đến lao động và tai nạn nghề nghiệp",
+        choices: [{ k: 'yes', label: "Nhận ca thêm", sub: "Tiền nhiều hơn, sức khỏe mất đi" }, { k: 'no', label: "Từ chối", sub: "Giữ sức khỏe, giữ mức lương cũ" }] };
+    },
+    apply: k => { S.flags.hdHard = 1; if (k === 'yes') { eff({ h: -7, hl: -5, money: 0.07 }); log("Bạn nhận ca thêm. Tháng đầu còn được, tháng sau bạn nhìn đồng hồ và không muốn dậy.", 'ev'); } else { eff({ hl: 3, so: 2 }); log("Bạn từ chối. Sếp gật đầu và nói: vậy thì cẩn thận hơn đấy.", 'ev'); } } },
+  hd_school: {
+    build: () => {
+      if (S.flags.hdSchool || !S.school || (S.school !== 'high' && S.school !== 'uni')) return null;
+      return { title: "Có chỗ thực tập trả lương, và một khóa học nâng cao không trả lương.",
+        body: ["Bạn phải chọn một con đường. Con đường nào cũng dài, nhưng chỉ một con đường dẫn về cùng một chỗ."],
+        fact: "Theo UNESCO, khoảng 30% thanh niên không đọc được một đoạn văn đơn giản",
+        choices: [{ k: 'work', label: "Đi thực tập có lương", sub: "Có tiền hôm nay" }, { k: 'study', label: "Học tiếp", sub: "Nợ có thể chờ, kiến thức thì không" }] };
+    },
+    apply: k => { S.flags.hdSchool = 1; if (k === 'work') { eff({ sm: 2, money: 0.04, hl: -2 }); log("Bạn đi thực tập có lương và học được nghề thật, nhưng bằng chứng chỉ còn một tờ giấy.", 'ev'); } else { eff({ sm: 6, money: -0.03, hl: 3 }); log("Bạn học tiếp. Sáu năm nữa, bạn sẽ có một cái gì đó không thể mất đi.", 'ev'); } } },
+  hd_migrate: {
+    build: () => {
+      if (S.flags.hdMig || S.refugee) return null;
+      return { title: "Cơ hội ở một nước khác. Giấy tờ của bạn không sang được đâu cả.",
+        body: ["Ở đây bạn biết ai, và biết mình thuộc về đâu. Ở kia bạn không biết gì cả, trừ việc lương cao hơn."],
+        fact: "Khoảng 280 triệu người đang sống ở nước ngoài so với nơi họ sinh ra (UNHCR)",
+        choices: [{ k: 'go', label: "Đi", sub: "Bắt đầu lại từ đầu, ở nơi không ai biết tên bạn" }, { k: 'stay', label: "Ở lại", sub: "Giữ những gì bạn đã có" }] };
+    },
+    apply: k => { S.flags.hdMig = 1; if (k === 'go') { eff({ money: 0.08, hl: -10, so: -8, sm: 2 }); log("Bạn đi. Năm đầu ở nơi mới, không ai biết bạn từng là ai.", 'ev'); } else { eff({ hl: 3, so: 3 }); log("Bạn Ở lại. Vài năm sau, bạn tự hỏi lần nữa.", 'ev'); } } },
+  hd_care: {
+    build: () => {
+      if (S.flags.hdCare) return null;
+      const old = (S.fam.mom.alive && S.fam.mom.age > 75) || (S.fam.dad.alive && S.fam.dad.age > 75);
+      if (!old) return null;
+      return { title: "Bạn có thể đưa cha mẹ về ở, hoặc thuê người chăm sóc, hoặc để họ tự lo.",
+        body: ["Cả ba cách đều tốn tiền. Chỉ có một cách không tốn tiền."],
+        fact: "Khoảng 60% người cao tuổi sống ở nước ngoài sống cùng con cái (UN DESA)",
+        choices: [{ k: 'home', label: "Đưa về nhà", sub: "Tốn thời gian, mệt, nhưng gần" }, { k: 'hire', label: "Thuê người chăm", sub: "Tốn tiền, nhưng bạn vẫn làm việc được" }, { k: 'none', label: "Để họ tự lo", sub: "Rẻ nhất. Bạn sẽ nghĩ về nó mỗi ngày" }] };
+    },
+    apply: k => { S.flags.hdCare = 1; if (k === 'home') { eff({ hl: 5, money: -0.05, h: -4 }); log("Bạn đưa cha mẹ về nhà. Nhà nhỏ hơn, nhưng có tiếng cười của trẻ nữa.", 'ev'); } else if (k === 'hire') { eff({ hl: -2, money: -0.08 }); log("Bạn thuê người chăm. Bạn đi làm, và mỗi tháng nhận một hóa đơn.", 'ev'); } else { eff({ hl: -12, so: -5 }); log("Bạn để họ tự lo. Câu đầu tiên bạn nói mỗi lần gọi điện là: 'Con bận lắm'.", 'bad'); } } },
+  hd_dark: {
+    build: () => {
+      if (!S.curse || S.flags.hdDark) return null;
+      return { title: "Có thứ gì đó hỏi bạn muốn xem. Không cần trả tiền, không cần dấu tên, chỉ cần bạn nhìn.",
+        body: ["Nhìn một lần thôi. Bạn tự nhủ vậy, và đó là lý do bạn sẽ nhìn."],
+        fact: "Hiện tượng 'kẻ xấu mắt' (evil gaze) được ghi nhận ở nhiều nền văn hóa, từ thời Trung Đông đến Việt Nam và Ba Lan",
+        choices: [{ k: 'look', label: "Nhìn", sub: "Bạn sẽ không quên được thứ vừa thấy" }, { k: 'away', label: "Quay đi", sub: "Có thứ gì đó sẽ nhớ mặt bạn" }] };
+    },
+    apply: k => { S.flags.hdDark = 1; if (k === 'look') { eff({ hl: -10, h: -5, sm: 3 }); log("Bạn nhìn. Nó không có mặt, nhưng có tiếng thở của bạn trả lại.", 'bad'); } else { eff({ hl: -6, so: -3 }); log("Bạn quay đi. Nhưng từ đó, mỗi lần có ai đó đứng sau lưng, bạn đều ngoái lại.", 'bad'); } } },
+  hd_ritual: {
+    build: () => {
+      if (S.flags.hdRitual || !S.rel || 'IBH'.indexOf(S.rel) < 0) return null;
+      return { title: "Nhà thầy nhắc: năm nay phải làm lễ, nếu không thì nhà sẽ xấu.",
+        body: ["Lễ tốn kém gần hết khoản tiền dành dành. Bỏ qua thì đồng nào cũng biết, và nhà thầy sẽ nhắc lại."],
+        fact: "Chi tiêu tôn giáo ở nhiều nước chiếm khoảng 5–10% thu nhập hộ gia đình (Pew)",
+        choices: [{ k: 'do', label: "Làm lễ", sub: "Mất tiền, giữ được nhà" }, { k: 'no', label: "Bỏ qua", sub: "Giữ được tiền, mất nhà" }] };
+    },
+    apply: k => { S.flags.hdRitual = 1; if (k === 'do') { eff({ money: -0.07, hl: 6, so: 3 }); log("Bạn làm lễ. Nhà thầy nói: năm sau cũng vậy nha.", 'ev'); } else { eff({ money: 0.03, hl: -8, so: -5 }); log("Bạn bỏ qua. Mùa sau, người ta không nhìn mặt bạn nữa.", 'bad'); } } },
+  hd_last: {
+    build: () => {
+      if (S.flags.hdLast || S.age < 55) return null;
+      return { title: "Bác sĩ hỏi bạn muốn xử lý thế nào nếu ngày nào đó mọi việc không còn khả năng.",
+        body: ["Có những người trì hoãn câu trả lời cho tới khi không còn kịp trả lời."],
+        fact: "Khoảng 70% người bệnh muốn được hỏi về việc chăm sóc cuối đời, nhưng chỉ khoảng 40% thực sự được hỏi (WHO)",
+        choices: [{ k: 'write', label: "Viết ra, sớm", sub: "Gia đình biết trước, dù đau đớn" }, { k: 'later', label: "Để sau", sub: "Chuyện gì cũng có thể đợi được" }] };
+    },
+    apply: k => { S.flags.hdLast = 1; if (k === 'write') { eff({ hl: 6, so: 3, sm: 2 }); log("Bạn viết ra, và đặt trong ngăn kéo. Chiếc ngăn kéo đó sau này sẽ được mở.", 'ev'); } else { eff({ hl: -6, so: -2 }); log("Bạn nói: để sau. Rồi bạn không nói nữa.", 'ev'); } } },
+  hd_child_fut: {
+    build: () => {
+      if (S.flags.hdFut || !S.fam.kids || !S.fam.kids.length) return null;
+      return { title: "Con bạn hỏi bạn muốn nó sống như thế nào.",
+        body: ["Bạn đã sống như thế này để nó có được thứ bạn không có. Nhưng nó đang sống như thế này vì bạn sống."],
+        fact: "Theo các nghiên cứu dài hạn, mức thu nhập của trẻ em phụ thuộc mạnh vào thu nhập của cha mẹ",
+        choices: [{ k: 'better', label: "Cho con một đời dễ hơn", sub: "Bạn sẽ phá vỡ một thứ gì đó" }, { k: 'same', label: "Để nó tự quyết", sub: "Chúng ta không giống nhau ở nhiều chỗ" }] };
+    },
+    apply: k => { S.flags.hdFut = 1; if (k === 'better') { eff({ money: -0.08, hl: 6, so: 3 }); log("Bạn dành cho con một đời dễ hơn đời bạn. Bạn hy vọng nó không hỏi vì sao.", 'ev'); } else { eff({ hl: -3, so: 2 }); log("Bạn nói: tùy con. Con gật đầu, và cả hai đều biết là lời nói dối.", 'ev'); } } },
+
   temper: {
     build: () => { const mv = !!(S.dis && S.dis.k === 'move'), sg = !!(S.dis && S.dis.k === 'sight');
       const nm = callName(S.name);
