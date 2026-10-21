@@ -1,7 +1,7 @@
 @echo off
-title 1 in 8 Billion - Local Server
+title Vo Han Trung Sinh - Local Server
 echo ========================================================
-echo    1 in 8 Billion (1 trong 8 ty) - Ban chay Offline
+echo    Vo Han Trung Sinh - Ban chay Offline
 echo ========================================================
 echo.
 echo Dang khoi dong server cuc bo...
