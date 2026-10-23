@@ -378,7 +378,11 @@ function scheduledDecisions() {
       // Urban Cultivation / Secret Taoist Encounters
       { id: 'vhts_dao_encounter', check: () => a >= 18 && a <= 32 && !S.flags.vhts_cult_started && (S.flags.vhts_cult_seed || Math.random() < 0.12) },
       { id: 'vhts_dao_dilemma', check: () => S.cultivation && S.cultivation.stage >= 1 && a >= 25 && !S.flags.vhts_dao_choice && Math.random() < 0.3 },
-      { id: 'vhts_tribulation', check: () => S.cultivation && S.cultivation.stage >= 2 && a >= 60 && !S.flags.vhts_trib_done && Math.random() < 0.35 }
+      { id: 'vhts_tribulation', check: () => S.cultivation && S.cultivation.stage >= 2 && a >= 60 && !S.flags.vhts_trib_done && Math.random() < 0.35 },
+      // Modern Era Decisions (2024-2026)
+      { id: 'dec_ai_upskill', check: () => a >= 22 && a <= 55 && isWorking() && (typeof calYr === 'function' ? calYr() : 2024) >= 2023 && !S.flags.dec_ai_done && Math.random() < 0.25 },
+      { id: 'dec_side_gig', check: () => a >= 20 && a <= 50 && isWorking() && !S.flags.dec_gig_done && Math.random() < 0.22 },
+      { id: 'dec_green_commute', check: () => a >= 24 && a <= 65 && S.urban && (typeof calYr === 'function' ? calYr() : 2024) >= 2022 && !S.flags.dec_green_done && Math.random() < 0.2 }
     ];
     for (const vd of vDecs) {
       if (out.length >= 2) break;
@@ -997,17 +1001,17 @@ const MAJORS = {
   med: { n: "Y khoa", d: "Bác sĩ hoặc điều dưỡng · học nhiều năm, khó vào", jobs: ['doctor', 'nurse', 'prof'] },
   nurse: { n: "Điều dưỡng", d: "Điều dưỡng · ở đâu cũng có việc làm", jobs: ['nurse', 'care', 'healthtech'], w: 1.3 },
   law: { n: "Luật", d: "Luật sư, công chức, cảnh sát", jobs: ['lawyer', 'civil', 'police'], w: 0.65 },
-  eng: { n: "Kỹ thuật", d: "Kỹ sư, kỹ thuật viên", jobs: ['engineer', 'electric', 'dev', 'mechanic'], w: 2 },
-  cs: { n: "Khoa học máy tính", d: "Lập trình viên phần mềm, kỹ sư", jobs: ['dev', 'engineer'], w: 0.8 },
-  biz: { n: "Kinh doanh và kinh tế", d: "Nhân viên văn phòng, tài chính, khởi nghiệp", jobs: ['finance', 'clerk', 'owner', 'shop', 'salesagent'], w: 3 },
+  eng: { n: "Kỹ thuật", d: "Kỹ sư, kỹ thuật viên", jobs: ['engineer', 'green_tech', 'electric', 'dev', 'mechanic', 'logistics'], w: 2 },
+  cs: { n: "Khoa học máy tính", d: "Lập trình viên phần mềm, kỹ sư AI, an ninh mạng", jobs: ['dev', 'ai_eng', 'cyber', 'engineer'], w: 0.8 },
+  biz: { n: "Kinh doanh và kinh tế", d: "Nhân viên văn phòng, tài chính, TMĐT, khởi nghiệp", jobs: ['finance', 'trader', 'ecom', 'clerk', 'owner', 'logistics', 'shop', 'salesagent'], w: 3 },
   edu: { n: "Sư phạm", d: "giáo viên", jobs: ['teacher', 'civil', 'childcare', 'social'], w: 1.3 },
-  sci: { n: "Khoa học tự nhiên", d: "Nhà nghiên cứu, giáo viên, kỹ sư", jobs: ['prof', 'teacher', 'engineer', 'dev', 'healthtech'] },
+  sci: { n: "Khoa học tự nhiên", d: "Nhà nghiên cứu, công nghệ sinh học, môi trường", jobs: ['prof', 'biotech', 'env_spec', 'teacher', 'engineer', 'dev', 'healthtech'] },
   hum: { n: "Khoa học nhân văn", d: "Giáo viên, nhân viên văn phòng, nhà văn", jobs: ['teacher', 'clerk', 'creator', 'prof', 'civil', 'social'], w: 1.1 },
   art: { n: "Nghệ thuật và thiết kế", d: "Nghệ sĩ, nhà thiết kế", jobs: ['creator', 'designer', 'teacher', 'artisan'], w: 0.65 },
   agr: { n: "Nông nghiệp", d: "Quản lý trang trại, nhà nghiên cứu", jobs: ['agbiz', 'prof', 'civil'], w: 0.35 },
   pe: { n: "Thể dục thể thao", d: "Giáo viên thể dục, huấn luyện viên, huấn luyện viên thể hình", jobs: ['teacher', 'coach', 'trainer'] },
   soc: { n: "Khoa học xã hội", d: "Nhân viên công tác xã hội, công chức, nhân viên văn phòng, nhà nghiên cứu", jobs: ['social', 'civil', 'clerk', 'prof', 'salesagent'], w: 1.3 },
-  media: { n: "Báo chí và truyền thông", d: "Phát thanh truyền hình, quảng cáo, quan hệ công chúng, nhà sáng tạo nội dung", jobs: ['creator', 'clerk', 'designer', 'salesagent'], w: 0.4 },
+  media: { n: "Báo chí và truyền thông", d: "Phát thanh truyền hình, truyền thông số, streamer, nhà sáng tạo", jobs: ['creator', 'streamer', 'clerk', 'designer', 'salesagent'], w: 0.4 },
   arch: { n: "Kiến trúc", d: "Kiến trúc sư, kỹ sư · văn phòng thiết kế", jobs: ['engineer', 'designer', 'construct'], w: 0.2 },
   hosp: { n: "Du lịch, khách sạn và ẩm thực", d: "Khách sạn, công ty du lịch, đầu bếp, khởi nghiệp", jobs: ['cook', 'clerk', 'salesagent', 'shop'], w: 0.5 },
   mil: { n: "Khoa học quân sự", d: "Học viện quân sự · sĩ quan", jobs: ['soldier', 'police', 'civil'], acad: 1 },
@@ -1035,14 +1039,16 @@ const oddsWord = p => p >= 0.6 ? "tương đối cao" : p >= 0.35 ? "khoảng m�
 const JOB_AV = { farm: 2.5, farmhand: 1.3, herder: 0.6, fisher: 0.4, agbiz: 0.08, construct: 2.5, factory: 2.5, garment: 0.9, miner: 0.3, artisan: 1, mechanic: 0.6, electric: 0.5, engineer: 1.2,
   vendor: 3, shop: 2.2, domestic: 0.9, driver: 1.6, delivery: 0.5, cook: 1.6, guard: 0.7, hair: 0.7, care: 0.7, clerk: 0.9, callc: 0.4, teacher: 0.6, nurse: 0.8, police: 0.1, soldier: 0.1,
   civil: 0.35, finance: 0.8, dev: 0.6, doctor: 0.5, lawyer: 0.35, prof: 0.4, creator: 1, designer: 0.08, coach: 0.04, trainer: 0.025,
-  cleaner: 3, warehouse: 0.5, childcare: 0.1, healthtech: 0.8, social: 0.25, salesagent: 0.15, welder: 0.2, pilot: 0.0035, cabin: 0.009 };
+  cleaner: 3, warehouse: 0.5, childcare: 0.1, healthtech: 0.8, social: 0.25, salesagent: 0.15, welder: 0.2, pilot: 0.0035, cabin: 0.009,
+  ai_eng: 0.35, streamer: 0.4, ecom: 0.6, cyber: 0.3, trader: 0.35, logistics: 0.6, green_tech: 0.4, biotech: 0.25, gig_rider: 0.9, env_spec: 0.3 };
 const SEC_K = { agr: 3.5, ind: 1.0, ser: 0.75 };
-const SELF_JOBS = ['farm', 'herder', 'fisher', 'vendor', 'artisan', 'creator', 'owner', 'agbiz'];
+const SELF_JOBS = ['farm', 'herder', 'fisher', 'vendor', 'artisan', 'creator', 'streamer', 'ecom', 'gig_rider', 'owner', 'agbiz'];
 const JOB_FAM = { farm: 'agr', farmhand: 'agr', herder: 'agr', fisher: 'agr', agbiz: 'agr', construct: 'build', miner: 'build', artisan: 'craft', hair: 'craft',
   factory: 'plant', garment: 'plant', mechanic: 'tech', electric: 'tech', engineer: 'tech', dev: 'tech', vendor: 'trade', shop: 'trade', owner: 'trade', cook: 'food',
   driver: 'move', delivery: 'move', guard: 'secu', police: 'secu', soldier: 'secu', domestic: 'care', care: 'care', nurse: 'health', doctor: 'health',
   clerk: 'office', callc: 'office', finance: 'office', civil: 'office', teacher: 'teach', prof: 'teach', lawyer: 'law', creator: 'art', musician: 'art', artist: 'art', actor: 'art', dancer: 'art', designer: 'art', athlete: 'sport', coach: 'sport', trainer: 'sport',
-  cleaner: 'care', warehouse: 'move', childcare: 'teach', healthtech: 'health', social: 'care', salesagent: 'trade', welder: 'build', clergy: 'faith', pilot: 'air', cabin: 'air', boardpro: 'teach', progamer: 'sport' };
+  cleaner: 'care', warehouse: 'move', childcare: 'teach', healthtech: 'health', social: 'care', salesagent: 'trade', welder: 'build', clergy: 'faith', pilot: 'air', cabin: 'air', boardpro: 'teach', progamer: 'sport',
+  ai_eng: 'tech', cyber: 'tech', streamer: 'art', ecom: 'trade', trader: 'office', logistics: 'move', green_tech: 'tech', biotech: 'health', gig_rider: 'move', env_spec: 'office' };
 function expMap() {
   if (!S.exp) { S.exp = {}; if (JOBS[S.job] && !NONWORK.includes(S.job) && S.jobY) S.exp[S.job] = [S.jobY, S.pct]; }
   return S.exp;
@@ -1057,8 +1063,9 @@ function expIn(id) {
 }
 const medLine = sm => MED_K * Math.pow(clamp((sm - 92) / 8, 0, 1), 2);
 const MED_K = 0.45;
-const MAJOR_REQ = { doctor: ['med'], nurse: ['med', 'nurse'], lawyer: ['law'], engineer: ['eng', 'cs', 'sci', 'arch'], healthtech: ['med', 'nurse', 'sci'] };
-const MAJOR_MOST = { dev: [['cs', 'eng', 'sci'], 0.12], designer: [['art', 'cs', 'eng', 'arch', 'media'], 0.15], finance: [['biz', 'law', 'sci', 'eng', 'cs'], 0.2, { hum: 0.5, soc: 0.6, edu: 0.35, agr: 0.35, media: 0.35, pe: 0.1 }] };
+const MAJOR_REQ = { doctor: ['med'], nurse: ['med', 'nurse'], lawyer: ['law'], engineer: ['eng', 'cs', 'sci', 'arch'], healthtech: ['med', 'nurse', 'sci'],
+  ai_eng: ['cs', 'eng', 'sci'], cyber: ['cs', 'eng'], biotech: ['sci', 'med'], green_tech: ['eng', 'sci', 'agr'], env_spec: ['sci', 'agr', 'eng'], trader: ['biz', 'sci', 'eng', 'cs'] };
+const MAJOR_MOST = { dev: [['cs', 'eng', 'sci'], 0.12], ai_eng: [['cs', 'eng', 'sci'], 0.08], cyber: [['cs', 'eng'], 0.1], designer: [['art', 'cs', 'eng', 'arch', 'media'], 0.15], finance: [['biz', 'law', 'sci', 'eng', 'cs'], 0.2, { hum: 0.5, soc: 0.6, edu: 0.35, agr: 0.35, media: 0.35, pe: 0.1 }] };
 const PRO_JOB = { med: 'doctor', nurse: 'nurse' };
 const GRAD_RARE = new Set(['cleaner', 'domestic', 'farmhand', 'garment', 'miner', 'construct']);
 const GRAD_MAN = new Set(['factory', 'warehouse', 'driver', 'delivery', 'guard']);

@@ -629,6 +629,25 @@ const EVENTS = [
       if (L0.ok) { S.money += L0.amt; eff({ h: 3, so: 3 }); return L`친구가 빌려 간 돈을 갚았습니다. 고맙다며 밥을 샀습니다. (+${wonStr(L0.amt)})`; }
       if (chance(0.35)) { eff({ so: -4, h: -3 }); return { t: "Số tiền cho vay không bao giờ được trả lại, và bạn cũng xa cách người bạn ấy.", k: 'bad' }; }
       eff({ h: -1 }); return "Số tiền cho vay không bao giờ được trả lại. Nhưng bạn không mất đi người bạn ấy."; } },
+  // Modern Era Events (2024 - 2026)
+  { id: 'ev_ai_era', a: [18, 70], c: () => !S.flags.ev_ai_era && (typeof calYr === 'function' ? calYr() : 2024) >= 2023 && C().net >= 40, w: 1.2, run: () => {
+      S.flags.ev_ai_era = 1; eff({ sm: 3, h: 1 });
+      return { t: "Làn sóng Trí tuệ Nhân tạo (AI) bùng nổ toàn cầu. Bạn bắt đầu ứng dụng các trợ lý số để tối ưu hóa công việc và việc học hàng ngày.", k: 'good', f: "Giai đoạn 2024–2025, hơn 72% tổ chức toàn cầu đã triển khai AI trong công việc thường nhật (McKinsey Global Survey, 2024)." }; } },
+  { id: 'ev_typhoon_yagi', a: [10, 90], c: () => !S.flags.ev_typhoon_yagi && ['VNM', 'PHL', 'CHN'].includes(S.cur) && (typeof calYr === 'function' ? calYr() : 2024) >= 2024, w: 1.0, run: () => {
+      S.flags.ev_typhoon_yagi = 1; eff({ h: -2, so: 4 });
+      return { t: "Siêu bão Yagi và hoàn lưu mưa lũ lịch sử càn quét qua nhiều tỉnh thành. Tình đồng bào ấm áp được thắp sáng qua hàng triệu chuyến xe cứu trợ và hỗ trợ tái thiết.", k: 'warm', f: "Bão Yagi (tháng 9/2024) là cơn bão mạnh nhất đổ bộ vào miền Bắc Việt Nam trong hơn ba thập kỷ qua." }; } },
+  { id: 'ev_cashless_society', a: [16, 75], c: () => !S.flags.ev_cashless && (typeof calYr === 'function' ? calYr() : 2024) >= 2021 && C().net >= 50, w: 1.0, run: () => {
+      S.flags.ev_cashless = 1; eff({ h: 1, sm: 1 });
+      return { t: "Thanh toán quét mã QR và chuyển khoản ngân hàng không tiền mặt trở thành thói quen mỗi ngày, từ quán nước vỉa hè đến nhà sách, siêu thị.", k: 'good', f: "Khu vực Đông Nam Á dẫn đầu thế giới về tốc độ tăng trưởng thanh toán mã QR bán lẻ giai đoạn 2023–2025 (World Bank, 2024)." }; } },
+  { id: 'ev_cyber_fraud', a: [22, 85], c: () => !S.flags.ev_cyber_scam && (typeof calYr === 'function' ? calYr() : 2024) >= 2022 && C().net >= 40, w: 0.8, run: () => {
+      S.flags.ev_cyber_scam = 1; eff({ sm: 2, h: 1 });
+      return { t: "Bạn nhận được cuộc gọi video giả mạo người thân bằng công nghệ Deepfake tinh vi. May mắn là bạn đã chủ động gọi lại kiểm chứng và thoát khỏi bẫy lừa đảo.", k: 'good', f: "Các vụ lừa đảo mạo danh danh tính bằng AI Deepfake gia tăng nhanh chóng trên toàn cầu trong giai đoạn 2023–2025." }; } },
+  { id: 'ev_green_transition', a: [18, 80], c: () => !S.flags.ev_green_shift && (typeof calYr === 'function' ? calYr() : 2024) >= 2023, w: 0.9, run: () => {
+      S.flags.ev_green_shift = 1; eff({ hl: 2, h: 2 });
+      return { t: "Làn sóng xe máy điện, ô tô điện và năng lượng tái tạo dần phủ xanh đường phố đô thị. Tiếng ồn động cơ và khói bụi giảm bớt rõ rệt.", k: 'good', f: "Mục tiêu phát thải ròng bằng 0 (Net Zero) vào năm 2050 đang thúc đẩy các cuộc chuyển dịch xanh mạnh mẽ tại nhiều quốc gia." }; } },
+  { id: 'ev_heatwave_record', a: [12, 95], c: () => !S.flags.ev_heatwave && (typeof calYr === 'function' ? calYr() : 2024) >= 2023, w: 1.1, run: () => {
+      S.flags.ev_heatwave = 1; eff({ hl: -1, h: -1 });
+      return { t: "Đợt nắng nóng gay gắt lịch sử khiến nhiệt độ ngoài trời vượt 42°C. Mọi người nhắc nhau uống đủ nước và hạn chế ra đường vào giờ cao điểm buổi trưa.", k: 'bad', f: "Tổ chức Khí tượng Thế giới (WMO) công bố các năm 2023–2024 liên tiếp xác lập kỷ lục nhiệt độ trung bình cao nhất lịch sử Trái Đất." }; } },
 ];
 const EVMAP = {};
 const proSportH = h => { const sp = (S.ath && S.ath.sp) || S.flags.athSp; return !!sp && h.id.startsWith('sp_') && hobbyName(h.id) === sp; };

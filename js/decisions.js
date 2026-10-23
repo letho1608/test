@@ -3486,4 +3486,86 @@ const DEC = {
       }
     }
   },
+
+  // Modern Era Decisions (2024-2026)
+  dec_ai_upskill: {
+    build: () => {
+      if (S.flags.dec_ai_done) return null;
+      return {
+        title: "Cơ hội nâng cấp kỹ năng: Ứng dụng Trí tuệ Nhân tạo (AI)",
+        body: ["Cơ quan và thị trường khuyến khích người lao động ứng dụng các công cụ AI vào quy trình làm việc để gia tăng hiệu suất."],
+        fact: "Theo Diễn đàn Kinh tế Thế giới (WEF), 85% công việc trong tương lai gần sẽ yêu cầu kỹ năng cộng tác với các công cụ AI.",
+        choices: [
+          { k: 'learn', label: "Chủ động học cách ứng dụng AI vào công việc", sub: "Tốn chút thời gian học hỏi, nhưng năng suất và thu nhập tăng vọt" },
+          { k: 'pass', label: "Tiếp tục làm việc theo phương pháp quen thuộc", sub: "Giữ nhịp điệu thường ngày, không phải làm quen công nghệ mới" }
+        ]
+      };
+    },
+    apply: k => {
+      S.flags.dec_ai_done = 1;
+      if (k === 'learn') {
+        S.flags.ai_skilled = 1;
+        const b = incomeAt(C(), 0.5) * 0.15;
+        S.money += b;
+        eff({ sm: 6, h: 3 });
+        log("Bạn làm chủ các công cụ AI mới, tự động hóa quy trình lặp lại và được khen thưởng vì năng suất vượt bậc.", 'good');
+      } else {
+        eff({ h: 1 });
+        log("Bạn chọn giữ nguyên cách làm truyền thống và hoàn thành công việc theo kinh nghiệm sẵn có.", 'ev');
+      }
+    }
+  },
+
+  dec_side_gig: {
+    build: () => {
+      if (S.flags.dec_gig_done) return null;
+      return {
+        title: "Nghề tay trái trong kỷ nguyên số (Side Hustle / Bán hàng Online)",
+        body: ["Ngoài công việc chính, bạn có cơ hội mở gian hàng trực tuyến hoặc nhận dự án tự do trên các nền tảng số."],
+        fact: "Kinh tế làm việc linh hoạt (Gig Economy) đóng góp hơn 30% lực lượng lao động tại các nền kinh tế mới nổi (ILO, 2024).",
+        choices: [
+          { k: 'gig', label: "Bắt đầu làm thêm ngoài giờ", sub: "Kiếm thêm thu nhập nhưng sẽ bận rộn hơn đôi chút" },
+          { k: 'rest', label: "Giữ thời gian nghỉ ngơi và chăm sóc bản thân", sub: "Bảo đảm sức khỏe và sự thư thái trọn vẹn" }
+        ]
+      };
+    },
+    apply: k => {
+      S.flags.dec_gig_done = 1;
+      if (k === 'gig') {
+        const extra = incomeAt(C(), 0.5) * 0.12;
+        S.money += extra;
+        eff({ sm: 3, hl: -1, h: 1 });
+        log("Nghề tay trái đem lại nguồn thu nhập mới vững vàng, giúp bạn tích lũy thêm khoản tài chính an tâm.", 'good');
+      } else {
+        eff({ hl: 4, h: 3 });
+        log("Bạn duy trì lối sống cân bằng, bảo vệ sức khỏe và tận hưởng trọn vẹn những buổi tối thảnh thơi.", 'good');
+      }
+    }
+  },
+
+  dec_green_commute: {
+    build: () => {
+      if (S.flags.dec_green_done) return null;
+      return {
+        title: "Lựa chọn lối sống: Chuyển sang Phương tiện Điện thông minh",
+        body: ["Hạ tầng trạm sạc và xe máy điện phủ khắp phố phường. Bạn cân nhắc đổi xe để tiết kiệm nhiên liệu và giảm phát thải."],
+        fact: "Tỷ lệ xe hai bánh chạy điện tại Đông Nam Á dự kiến vượt mốc 35% trước năm 2030 (BloombergNEF).",
+        choices: [
+          { k: 'ev', label: "Đổi sang phương tiện điện thân thiện môi trường", sub: "Chi phí vận hành rẻ hơn nhiều so với tiền xăng, êm ái không khói bụi" },
+          { k: 'gas', label: "Tiếp tục sử dụng phương tiện hiện có", sub: "Không phải chi tiền mua sắm phương tiện mới" }
+        ]
+      };
+    },
+    apply: k => {
+      S.flags.dec_green_done = 1;
+      if (k === 'ev') {
+        S.flags.green_moto = 1;
+        eff({ h: 3, hl: 3 });
+        log("Chiếc xe điện vận hành êm ru và tiết kiệm đáng kể chi phí hàng tháng, bạn cảm thấy nhẹ nhõm hơn mỗi khi lưu thông.", 'good');
+      } else {
+        eff({ h: 1 });
+        log("Bạn tiếp tục sử dụng phương tiện quen thuộc bấy lâu nay.", 'ev');
+      }
+    }
+  },
 };

@@ -736,7 +736,8 @@ const SC_PROP = { shelter: 'factory', pilot: 'office', cabin: 'office', farm: 'c
   guard: 'office', hair: 'stall', care: 'clinic', clerk: 'office', callc: 'office', teacher: 'school', nurse: 'clinic', police: 'flag', soldier: 'flag', civil: 'office',
   finance: 'office', dev: 'office', doctor: 'clinic', lawyer: 'office', prof: 'school', creator: 'easel', artist: 'easel', designer: 'office', owner: 'stall', mp: 'dome', leader: 'dome', astro: 'rocket', athlete: 'flag', coach: 'flag', trainer: 'flag', musician: 'mic', idol: 'mic', actor: 'mic', dancer: 'mic',
   homemaker: 'laundry', retired: 'bench', student: 'school', service: 'flag', seeking: 'sign', prison: 'none',
-  cleaner: 'laundry', warehouse: 'truck', childcare: 'school', healthtech: 'clinic', social: 'office', salesagent: 'office', welder: 'crane', clergy: 'dome', boardpro: 'school', progamer: 'office' };
+  cleaner: 'laundry', warehouse: 'truck', childcare: 'school', healthtech: 'clinic', social: 'office', salesagent: 'office', welder: 'crane', clergy: 'dome', boardpro: 'school', progamer: 'office',
+  ai_eng: 'office', streamer: 'easel', ecom: 'stall', cyber: 'office', trader: 'office', logistics: 'truck', green_tech: 'pole', biotech: 'clinic', gig_rider: 'moto', env_spec: 'school' };
 const SKIN_W = { n: [36, 44, 15, 5, 0, 0], m: [3, 17, 42, 30, 8, 0], s: [0, 0, 14, 46, 34, 6], e: [22, 50, 28, 0, 0, 0], se: [0, 8, 44, 40, 8, 0],
   a: [0, 0, 0, 6, 36, 58], ha: [0, 0, 6, 32, 44, 18], l: [6, 22, 34, 26, 10, 2], c: [0, 0, 5, 15, 40, 40], ca: [6, 32, 44, 18, 0, 0], pa: [0, 0, 4, 24, 46, 26],
   sc: [16, 46, 28, 10, 0, 0], in: [0, 4, 30, 46, 20, 0], au: [0, 0, 5, 25, 40, 30], br: [0, 0, 10, 36, 34, 20], co: [0, 10, 36, 38, 16, 0], ro: [0, 10, 40, 40, 10, 0] };
@@ -1783,7 +1784,8 @@ const MO_WORK = { clerk: 'office', callc: 'office', finance: 'office', dev: 'off
   teacher: 'class', prof: 'class', childcare: 'class', boardpro: 'class', progamer: 'office', doctor: 'clinic', nurse: 'clinic', healthtech: 'clinic', care: 'clinic',
   farm: 'field', farmhand: 'field', agbiz: 'field', herder: 'herd', fisher: 'sea', vendor: 'market', shop: 'market', owner: 'market', artisan: 'market', hair: 'market', mechanic: 'market',
   construct: 'site', miner: 'site', welder: 'site', electric: 'site', factory: 'factory', garment: 'factory', warehouse: 'factory', driver: 'road', delivery: 'road', cook: 'kitchen',
-  artist: 'studio', creator: 'studio', musician: 'stage', idol: 'stage', actor: 'stage', athlete: 'sport', coach: 'sport', trainer: 'sport', clergy: 'church',
+  artist: 'studio', creator: 'studio', streamer: 'studio', musician: 'stage', idol: 'stage', actor: 'stage', athlete: 'sport', coach: 'sport', trainer: 'sport', clergy: 'church',
+  ai_eng: 'office', cyber: 'office', trader: 'office', ecom: 'office', logistics: 'factory', green_tech: 'site', biotech: 'clinic', gig_rider: 'road', env_spec: 'field',
   soldier: 'base', police: 'base', service: 'base', guard: 'base', domestic: 'house', cleaner: 'house', homemaker: 'house', childwork: 'house', shelter: 'factory', pilot: 'sky', cabin: 'sky', astro: 'space', mp: 'hall', leader: 'hall' };
 function moWorker(c, o, x, y) {
   const sub = c.a[1] || '', ret = sub === 'ret', s = moFig(c.cast.me, c.P, Object.assign({}, o, sub === 'rank' ? { pose: 'up' } : {}));
