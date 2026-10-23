@@ -216,24 +216,28 @@ function idRows() {
 }
 const TMPR_ID = () => ({ cur: "Tò mò", act: "Năng động", warm: "Ấm áp", grit: "Kiên trì" });
 const TAL_ID = () => ({ st: "Học tập", bd: "vận động thể chất", ar: "vẽ", mu: "Âm nhạc", hd: "khéo tay", wd: "giao tiếp với mọi người" });
-const STATS = [['hl', "Sức khỏe", '--good'], ['h', "Hạnh phúc", '--gold'], ['sm', "Kiến thức", '--stamp'], ['so', "Quan hệ", '--accent']];
+const STATS = [['hl', "Sức khỏe", '--good'], ['h', "Hạnh phúc", '--gold'], ['sm', "Kiến thức", '--smarts'], ['so', "Quan hệ", '--relation']];
 const dayInc = inc => inc > 0 && inc < 2200 ? L` · 하루 약 ${'$' + (inc / 365).toFixed(1)}` : '';
-const THEME_NEXT = { auto: 'dark', dark: 'light', light: 'auto' };
+const THEME_NEXT = { dark: 'light', light: 'dark' };
 function applyTheme() {
-  const t = UI.prefs.theme === 'dark' || UI.prefs.theme === 'light' ? UI.prefs.theme : 'auto', el = document.documentElement;
-  if (t === 'auto') delete el.dataset.theme; else el.dataset.theme = t;
+  const pref = UI.prefs && UI.prefs.theme;
+  const sysDark = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
+  const t = pref === 'light' ? 'light' : pref === 'dark' ? 'dark' : (sysDark ? 'dark' : 'light');
+  document.documentElement.dataset.theme = t;
   if (typeof $ === 'function' && $('#lifeMap')) { try { drawLifeMap(); } catch (e) { } }
-  const lab = { auto: "Sáng hay tối: theo thiết bị", dark: "Sáng hay tối: tối", light: "Sáng hay tối: sáng" }[t], ic = { auto: '◐', dark: '☾', light: '☀' }[t];
+  const lab = t === 'dark' ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối";
+  const ic = t === 'dark' ? '☾' : '☀';
   const b = $('#themeBtn'); if (b) { b.innerHTML = `<span aria-hidden="true">${ic}</span>`; b.setAttribute('aria-label', lab); b.title = lab; }
-  const b2 = $('#themeBtn2'); if (b2) { b2.innerHTML = `<span aria-hidden="true">${ic}</span><span class="tbl"> ${esc({ auto: "Màn hình: tự động", dark: "Màn hình: tối", light: "Màn hình: sáng" }[t])}</span>`; b2.setAttribute('aria-label', lab); b2.title = lab; }
+  const b2 = $('#themeBtn2'); if (b2) { b2.innerHTML = `<span aria-hidden="true">${ic}</span><span class="tbl"> ${t === 'dark' ? "Giao diện: Tối" : "Giao diện: Sáng"}</span>`; b2.setAttribute('aria-label', lab); b2.title = lab; }
 }
 function cycleTheme() {
-  const t = UI.prefs.theme === 'dark' || UI.prefs.theme === 'light' ? UI.prefs.theme : 'auto';
-  UI.prefs.theme = THEME_NEXT[t] === 'auto' ? undefined : THEME_NEXT[t]; lsSet(PREF_KEY, UI.prefs);
+  const current = document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  UI.prefs.theme = next; lsSet(PREF_KEY, UI.prefs);
   applyTheme();
   try { if (typeof TG !== 'undefined') { TG.base = null; if (typeof tgSize === 'function') tgSize(); } } catch (e) { }
   try { idPicKey = ''; if (S && (UI.view === 'lifeview' || UI.view === 'death')) renderAll(); } catch (e) { }
-  toast({ auto: "Màn hình giờ sẽ sáng hay tối theo cài đặt của thiết bị.", dark: "Đã chuyển sang màn hình tối.", light: "Đã chuyển sang màn hình sáng." }[THEME_NEXT[t]]);
+  toast(next === 'dark' ? "Đã chuyển sang màn hình tối." : "Đã chuyển sang màn hình sáng.");
 }
 function renderStats() {
   $('#statBars').innerHTML = STATS.map(([k, n, col]) => `<div class="stat"${k === 'sm' ? ` title="${esc("Kiến thức: vị trí của bạn so với những người cùng tuổi (100 là cao nhất)")}"` : ''}><span>${n}</span><span class="bar"><i style="width:${S.st[k].toFixed(0)}%;background:var(${col})"></i></span><span class="v">${Math.round(S.st[k])}</span></div>`).join('');
@@ -883,7 +887,7 @@ function guessHome() {
 }
 function initEraSel() {
   const sel = $('#eraYr'); if (!sel || sel.options.length) return;
-  let h = `<option value="r">${L`아무 해나 (${ERA_Y0}~${ERA_PAST1})`}</option>`;
+  let h = `<option value="r">Năm ngẫu nhiên (${ERA_Y0} – ${ERA_PAST1})</option>`;
   for (let y = ERA_PAST1; y >= ERA_Y0; y--) h += `<option value="${y}">${y}</option>`;
   sel.innerHTML = h; sel.value = eraRand() ? 'r' : String(eraYear() || ERA_Y_DEF);
   sel.addEventListener('change', () => { UI.prefs.eraY = sel.value === 'r' ? 'r' : +sel.value; lsSet(PREF_KEY, UI.prefs); renderIntro(); });
@@ -915,18 +919,17 @@ function recordLife() {
   track('life_end', { era: !!(S.era && S.era !== 'now'), country: S.born, age: d.age, cause: d.cause, decisions: S.stats.decisions, auto: (S.stats.auto || 0) > 0, notes: (S.journal || []).length, minutes: S.startedAt ? Math.round((Date.now() - S.startedAt) / 60000) : null });
 }
 function deathFallback() {
-  
   try { $('#ending') && $('#ending').remove(); } catch (e) { }
   let story = ''; try { story = storyOf(summaryOf(S)); } catch (e) { }
-  $('#dead').innerHTML = L`<div class="panel" style="margin-top:24px"><h3><span>${esc(S.name && S.name.full || '')}</span></h3><p>${esc(story)}</p><p class="lbl" style="margin-top:12px">기록 화면을 그리는 중 문제가 생겼어요. 이 삶은 전생 기록에 남아 있어요.</p></div><div class="vhts-death-actions" style="margin: 1.5rem 0 1rem; display: flex; flex-direction: column; gap: 8px;">
-    <button type="button" id="btnMigMap" style="width: 100%; padding: 10px 14px; border: 1px solid var(--rule); background: #FAF9F6; font-family: var(--serif); font-size: 13px; font-weight: bold; cursor: pointer; text-align: center;">
+  $('#dead').innerHTML = `<div class="panel" style="margin-top:24px"><h3><span>${esc(S.name && S.name.full || '')}</span></h3><p>${esc(story)}</p><p class="lbl" style="margin-top:12px">Đã xảy ra sự cố khi hiển thị màn hình kết thúc. Kiếp sống này đã được lưu vào Ký ức tiền kiếp.</p></div><div class="vhts-death-actions" style="margin: 1.5rem 0 1rem; display: flex; flex-direction: column; gap: 8px;">
+    <button type="button" id="btnMigMap" class="quick-btn" style="width: 100%; padding: 12px 14px; font-weight: bold; cursor: pointer; text-align: center;">
       🗺️ BẢN ĐỒ LỘ TRÌNH DI CƯ TOÀN CẦU CỦA KIẾP NÀY
     </button>
-    <button type="button" id="btnWhatIf" style="width: 100%; padding: 10px 14px; border: 1px solid #111827; background: #111827; color: #FFFFFF; font-family: var(--serif); font-size: 13px; font-weight: bold; cursor: pointer; text-align: center;">
+    <button type="button" id="btnWhatIf" class="btn-launch" style="width: 100%; padding: 12px 14px; font-weight: bold; cursor: pointer; text-align: center;">
       ⏳ HIỆU ỨNG CÁNH BƯỚM: PHÂN NHÁNH THỰC TẠI SONG SONG
     </button>
   </div>
-  <div class="endbtns"><button class="cta" id="againBtn">다시 태어나기</button><button class="ghost" id="homeBtn">처음 화면으로</button></div>`;
+  <div class="endbtns"><button class="cta" id="againBtn">► Trùng sinh kiếp khác</button><button class="ghost" id="homeBtn">Về màn hình đầu</button></div>`;
   show('dead');
 }
 function estateHTML() {
@@ -1020,10 +1023,11 @@ function eduEarlyHTML() {
   const nm = callName(S.name), c = CBY[d.where] || C(), dl = (d.label || '').replace(/ \(.*\)$|（.*）$/, '');
   if (EDU_U5W == null) EDU_U5W = Math.round(COUNTRIES.reduce((t, x) => t + x.u5 * x.b, 0) / TOTAL_BIRTHS);
   const hom = d.cause === 'hom' && d.label === CAUSE.hom, own = !!CAUSE[d.cause] && d.label !== CAUSE[d.cause] && !['can', 'oinf', 'ocd'].includes(d.cause);
-  const p = [[hom ? (d.age < 1 ? L`${eun(nm)} 첫돌을 맞기 전에 누군가의 폭력으로 세상을 떠났어요.` : L`${eun(nm)} ${d.age}살에 누군가의 폭력으로 세상을 떠났어요.`)
-    : d.age < 1 ? L`${eun(nm)} 첫돌을 맞기 전에 ${ro(dl)} 세상을 떠났어요.` : L`${eun(nm)} ${d.age}살에 ${ro(dl)} 세상을 떠났어요.`]];
+  const p = [[hom ? (d.age < 1 ? `${nm} đã qua đời do bạo lực trước ngày thôi nôi.` : `${nm} đã qua đời do bạo lực vào năm ${d.age} tuổi.`)
+    : d.age < 1 ? `${nm} đã qua đời vì ${dl} trước ngày thôi nôi.` : `${nm} đã qua đời vì ${dl} vào năm ${d.age} tuổi.`]];
   let src = '';
-  if (d.age < 5) { const u = c.u5 >= 10 ? Math.round(c.u5) : Math.round(c.u5 * 10) / 10; p.push([L`${c.ko}에서는 아이 1,000명 가운데 ${u}명이 다섯 살이 되기 전에 세상을 떠나요.`, L`세계 평균은 1,000명당 ${EDU_U5W}명이에요.`]); src = 'UN IGME'; }
+  const ctyName = (typeof COUNTRY_T !== 'undefined' && COUNTRY_T[c.id]) || (typeof I18N_T !== 'undefined' && I18N_T[c.ko]) || c.ko;
+  if (d.age < 5) { const u = c.u5 >= 10 ? Math.round(c.u5) : Math.round(c.u5 * 10) / 10; p.push([`Tại ${ctyName}, trong số 1.000 trẻ em có ${u} em qua đời trước 5 tuổi.`, `Mức trung bình toàn cầu là ${EDU_U5W} em trên 1.000 trẻ.`]); src = 'UN IGME'; }
   if (own) { }
   else if (EDU_PREV.has(d.cause)) { p.push(["Những bệnh như thế này, nếu có nước sạch, đủ dinh dưỡng, tiêm chủng, cơ sở y tế và thuốc men ở gần, trong nhiều trường hợp có thể phòng ngừa hoặc chữa khỏi."]); src = "Hơn một nửa số ca tử vong ở trẻ em là do những bệnh có thể phòng ngừa hoặc điều trị bằng những cách đơn giản, không tốn kém (WHO)"; }
   else if (EDU_ACC.has(d.cause)) { p.push(["Tai nạn giao thông và đuối nước là những nguyên nhân lớn khiến trẻ em và thanh thiếu niên trên thế giới mất đi sinh mạng.", "Đường sá an toàn, sự trông nom của người lớn và cơ hội học bơi giúp bảo vệ rất nhiều sinh mạng."]); src = "Tai nạn giao thông là nguyên nhân tử vong hàng đầu ở lứa tuổi 5–29, và đuối nước là một trong mười nguyên nhân tử vong hàng đầu ở lứa tuổi 1–24 (WHO)"; }
@@ -1035,7 +1039,7 @@ function eduEarlyHTML() {
   else p.push(["Có những bệnh khó phòng ngừa dù trẻ sinh ra ở đâu.", "Dù vậy, ở nơi có thể chữa trị gần nhà, nhiều trẻ sống sót hơn."]);
   p.push(["Cuộc đời này tuy ngắn, nhưng đã thật sự có mặt trên thế gian này."]);
   return `<div class="panel edubox"><h3><span>${"Vì sao cuộc đời này kết thúc sớm như vậy?"}</span></h3>${p.map(x => `<p>${esc(x.join(' '))}</p>`).join('')}${src ? `<p class="edusrc">${esc(src)}</p>` : ''}
-    <p class="eduq">${esc(L`함께 생각해 보기: 무엇이 있었다면 ${eun(nm)} 더 오래 살 수 있었을까요?`)}</p>
+    <p class="eduq">${esc(`Cùng suy ngẫm: Nếu có điều kiện gì hỗ trợ, ${nm} có thể đã sống lâu hơn?`)}</p>
     <div class="endbtns"><button class="cta" id="eduAgain">${"Chào đời lần nữa"}</button></div><small>${"Khi chào đời lần nữa, một cuộc đời mới sẽ bắt đầu ở một đất nước khác, trong một gia đình khác."}</small></div>`;
 }
 function showDeath() {
@@ -1129,7 +1133,7 @@ function showDeath() {
 function suicDeadHTML() {
   if (!S || !S.deathAt || S.deathAt.cause !== 'suic') return '';
   const young = S.deathAt.age < 19;
-  return `<div class="suichelp" role="note"><p>${["Tự tử không thể giải thích bằng một lý do duy nhất.", "Sức khỏe thể chất và tinh thần, những khó khăn gặp phải trong đời, cùng các điều kiện xã hội như nghèo đói, cô đơn hay phân biệt đối xử luôn đan xen với nhau (WHO 2023).", "Tự tử có thể phòng ngừa được, và nhiều người đi qua khủng hoảng đã được giúp đỡ và tiếp tục sống."].join(' ')}</p><p>${young ? L`지금 마음이 힘들다면 혼자 견디지 않아도 돼요. 청소년상담 1388 (휴대전화는 지역번호+1388, 문자는 #1388)이나 자살예방상담전화 109 (24시간), SNS 상담 마들랜이 이야기를 들어 줄 거예요. 다른 나라에서는 findahelpline.com에서 찾을 수 있어요.` : L`지금 마음이 힘드시다면 자살예방상담전화 109나 정신건강위기상담 1577-0199 (모두 24시간), SNS 상담 마들랜이 이야기를 들어 줄 거예요. 다른 나라에서는 findahelpline.com에서 찾을 수 있어요.`}</p></div>`;
+  return `<div class="suichelp" role="note"><p>${["Tự tử không thể giải thích bằng một lý do duy nhất.", "Sức khỏe thể chất và tinh thần, những khó khăn gặp phải trong đời, cùng các điều kiện xã hội như nghèo đói, cô đơn hay phân biệt đối xử luôn đan xen với nhau (WHO 2023).", "Tự tử có thể phòng ngừa được, và nhiều người đi qua khủng hoảng đã được giúp đỡ và tiếp tục sống."].join(' ')}</p><p>${young ? "Nếu lúc này lòng bạn đang rất nặng nề, bạn không cần phải gánh một mình: ở Việt Nam, Tổng đài quốc gia bảo vệ trẻ em 111 (24/7, miễn phí) hoặc Đường dây nóng Ngày Mai 096 306 1414; ở nơi khác, xem findahelpline.com. Luôn có người sẵn lòng lắng nghe bạn." : "Nếu lúc này bạn đang gặp khủng hoảng hoặc có ý nghĩ tiêu cực, hãy tìm kiếm sự trợ giúp: ở Việt Nam, Đường dây nóng Ngày Mai 096 306 1414; khi nguy cấp, gọi cấp cứu 115; ở nơi khác, xem findahelpline.com. Bạn không phải đơn độc."}</p></div>`;
 }
 function deadFoot() {
   const f = $('#deadFoot'); if (!f) return;
@@ -2070,41 +2074,41 @@ function openWorldCodex() {
     const name = (typeof COUNTRY_T !== 'undefined' && COUNTRY_T[c.id]) || c.ko || c.id;
     const pastL = lives.filter(l => l.iso === c.id);
     const badge = unlocked
-      ? `<span style="display:inline-block; font-size:10px; font-weight:700; color:#15803D; background:#DCFCE7; border:1px solid #86EFAC; padding:2px 6px; border-radius:3px;">ĐÃ SỐNG (${pastL.length} kiếp)</span>`
-      : `<span style="display:inline-block; font-size:10px; font-weight:700; color:#1F2937; background:#F3F4F6; border:1px solid #9CA3AF; padding:2px 6px; border-radius:3px;">CHƯA KHAI MỞ</span>`;
+      ? `<span style="display:inline-block; font-size:10px; font-weight:700; color:var(--good); background:var(--accent-soft); border:1px solid var(--good); padding:2px 8px; border-radius:4px;">ĐÃ SỐNG (${pastL.length} kiếp)</span>`
+      : `<span style="display:inline-block; font-size:10px; font-weight:700; color:var(--ink3); background:var(--card2); border:1px solid var(--rule); padding:2px 8px; border-radius:4px;">CHƯA KHAI MỞ</span>`;
 
-    return `<div class="codex-item" data-name="${name.toLowerCase()}" data-id="${c.id.toLowerCase()}" style="border: 1px solid ${unlocked ? '#15803D' : '#D1D5DB'}; padding: 10px 12px; background: ${unlocked ? '#F0FDF4' : '#FFFFFF'};">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-        <b style="font-size:13.5px; color:#111827; font-family:var(--f-display);">${name} <span style="font-size:11px; color:#1F2937; font-family:var(--f-mono); font-weight:600;">(${c.id})</span></b>
+    return `<div class="codex-item" data-name="${name.toLowerCase()}" data-id="${c.id.toLowerCase()}" style="border: 1px solid ${unlocked ? 'var(--good)' : 'var(--rule)'}; border-radius: 6px; padding: 11px 13px; background: ${unlocked ? 'var(--accent-soft)' : 'var(--card)'}; transition: all .15s ease;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <b style="font-size:13.5px; color:var(--ink); font-family:var(--f-display);">${name} <span style="font-size:11px; color:var(--ink3); font-family:var(--f-mono); font-weight:600;">(${c.id})</span></b>
         ${badge}
       </div>
-      <div style="font-size:11.5px; color:#111827; font-family:var(--f-mono); line-height:1.5;">
-        Kỳ vọng sống: <b style="color:#111827;">${c.le} tuổi</b> · Sinh suất: <b style="color:#111827;">${c.tfr} con</b><br>
-        GDP bình quân: <b style="color:#111827;">${(c.ppp || 0).toLocaleString()}</b>
+      <div style="font-size:11.5px; color:var(--ink2); font-family:var(--f-mono); line-height:1.55;">
+        Kỳ vọng sống: <b style="color:var(--ink);">${c.le} tuổi</b> · Sinh suất: <b style="color:var(--ink);">${c.tfr} con</b><br>
+        GDP bình quân: <b style="color:var(--ink);">${(c.ppp || 0).toLocaleString()}</b>
       </div>
-      ${unlocked ? `<div style="margin-top:6px; font-size:11px; color:#15803D; font-weight:700; border-top:1px dashed #86EFAC; padding-top:4px;">Kiếp gần nhất: ${esc(pastL[pastL.length - 1].name)} (${pastL[pastL.length - 1].age} tuổi)</div>` : ''}
+      ${unlocked ? `<div style="margin-top:6px; font-size:11px; color:var(--good); font-weight:700; border-top:1px dashed var(--rule); padding-top:4px;">Kiếp gần nhất: ${esc(pastL[pastL.length - 1].name)} (${pastL[pastL.length - 1].age} tuổi)</div>` : ''}
     </div>`;
   }).join('');
 
-  const content = `<div style="max-height: 72vh; overflow-y: auto; font-family: var(--serif); color: #111827;">
-    <div style="padding: 12px 14px; border: 1px solid #111827; background: #F9FAFB; margin-bottom: 12px;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
+  const content = `<div style="max-height: 72vh; overflow-y: auto; font-family: var(--f-body); color: var(--ink);">
+    <div style="padding: 14px 16px; border: 1px solid var(--rule); background: var(--card2); border-radius: 8px; margin-bottom: 14px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
         <div>
-          <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #111827; font-family: var(--f-mono);">TIẾN ĐỘ THÁM HIỂM ĐỊA CẦU</span>
-          <div style="font-size: 20px; font-weight: 800; color: #111827; margin-top: 2px;">${unlockedCount} / ${totCountries} Quốc Gia (${pctUnlocked}%)</div>
+          <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink3); font-family: var(--f-mono);">TIẾN ĐỘ THÁM HIỂM ĐỊA CẦU</span>
+          <div style="font-size: 22px; font-weight: 800; color: var(--ink); margin-top: 2px;">${unlockedCount} / ${totCountries} Quốc Gia (${pctUnlocked}%)</div>
         </div>
-        <div style="text-align: right; font-size: 12px; color: #111827; font-family: var(--f-mono);">
-          Tổng số kiếp: <b style="color:#111827; font-size:14px;">${lives.length} kiếp</b>
+        <div style="text-align: right; font-size: 12.5px; color: var(--ink2); font-family: var(--f-mono);">
+          Tổng số kiếp: <b style="color:var(--accent); font-size:15px;">${lives.length} kiếp</b>
         </div>
       </div>
-      <div style="width: 100%; height: 7px; background: #E5E7EB; margin-top: 10px; border-radius: 3px; overflow: hidden; border: 1px solid #D1D5DB;">
-        <div style="width: ${pctUnlocked}%; height: 100%; background: #111827;"></div>
+      <div style="width: 100%; height: 8px; background: var(--rule2); margin-top: 12px; border-radius: 999px; overflow: hidden; border: 1px solid var(--rule);">
+        <div style="width: ${pctUnlocked}%; height: 100%; background: var(--accent); border-radius: 999px; transition: width 0.4s ease;"></div>
       </div>
     </div>
 
-    <input type="text" id="codexSearch" placeholder="🔍 Tìm kiếm quốc gia theo tên hoặc mã ISO (VD: Việt Nam, VNM, Mỹ...)" style="width: 100%; box-sizing: border-box; padding: 9px 12px; margin-bottom: 12px; font-size: 13.5px; border: 1px solid #111827; color: #111827; background: #FFFFFF; font-weight: 500;">
+    <input type="text" id="codexSearch" placeholder="🔍 Tìm kiếm quốc gia theo tên hoặc mã ISO (VD: Việt Nam, VNM, Mỹ...)" style="width: 100%; box-sizing: border-box; padding: 10px 14px; margin-bottom: 14px; font-size: 13.5px; border: 1px solid var(--rule); border-radius: 6px; color: var(--ink); background: var(--paper); font-weight: 500; outline: none;">
 
-    <div id="codexGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 8px;">
+    <div id="codexGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 10px;">
       ${cards}
     </div>
   </div>`;
@@ -2130,59 +2134,59 @@ function openWorldCodex() {
 function openSamsaraTree() {
   const lives = (typeof lsGet === 'function' ? lsGet(LIVES_KEY, []) : []) || [];
   if (!lives.length) {
-    openSheet('Cây Phả Hệ Luân Hồi', '<p style="font-family:var(--serif); padding:28px 20px; text-align:center; color:var(--ink) !important; font-size:14.5px; font-weight: 500; line-height: 1.6;">Chưa có kiếp người nào được hoàn thành trên trình duyệt này.<br><span style="color:var(--ink2); font-size:13px; font-family:var(--f-mono);">Hãy bắt đầu kiếp đầu tiên để gieo hạt giống luân hồi!</span></p>');
+    openSheet('Cây Phả Hệ Luân Hồi', '<p style="font-family:var(--f-body); padding:32px 20px; text-align:center; color:var(--ink); font-size:15px; font-weight: 500; line-height: 1.6;">Chưa có kiếp người nào được hoàn thành trên trình duyệt này.<br><span style="color:var(--accent); font-size:13.5px; font-family:var(--f-mono); font-weight:600; margin-top:8px; display:inline-block;">Hãy bắt đầu kiếp đầu tiên để gieo hạt giống luân hồi!</span></p>');
     return;
   }
 
   const totYears = lives.reduce((s, l) => s + (l.age || 0), 0);
   const avgAge = (totYears / lives.length).toFixed(1);
 
-  const rawKarma = localStorage.getItem('vhts_soul_karma');
+  const rawKarma = window.__SECURE_STORAGE__ ? window.__SECURE_STORAGE__.getItem('vhts_soul_karma', null) : localStorage.getItem('vhts_soul_karma');
   const karma = rawKarma ? JSON.parse(rawKarma) : null;
 
   const treeNodes = lives.slice().map((l, i) => {
     const isLast = i === lives.length - 1;
     return `<div style="display: flex; gap: 14px; position: relative; margin-bottom: 14px;">
       <div style="display: flex; flex-direction: column; align-items: center; width: 32px;">
-        <div style="width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--ink); background: ${isLast ? 'var(--ink)' : 'var(--card)'}; color: ${isLast ? 'var(--card)' : 'var(--ink)'}; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; font-family: var(--f-mono);">
+        <div style="width: 28px; height: 28px; border-radius: 50%; border: 2px solid ${isLast ? 'var(--accent)' : 'var(--rule)'}; background: ${isLast ? 'var(--accent)' : 'var(--card)'}; color: ${isLast ? 'var(--accent-ink)' : 'var(--ink)'}; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; font-family: var(--f-mono);">
           ${i + 1}
         </div>
         ${!isLast ? '<div style="width: 2px; flex-grow: 1; background: var(--rule); margin: 4px 0;"></div>' : ''}
       </div>
-      <div style="flex-grow: 1; border: 1px solid var(--rule); padding: 12px 14px; background: var(--card); font-family: var(--serif);">
+      <div style="flex-grow: 1; border: 1px solid var(--rule); border-radius: 6px; padding: 12px 14px; background: var(--card); font-family: var(--f-body); box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
         <div style="display: flex; justify-content: space-between; align-items: baseline;">
-          <b style="font-size: 15px; color: var(--ink);">${esc(l.name)}</b>
-          <span style="font-size: 12px; font-family: var(--f-mono); color: var(--ink); font-weight: 700;">${esc(l.ko)} · ${l.age} tuổi</span>
+          <b style="font-size: 15px; color: var(--ink); font-family: var(--f-display);">${esc(l.name)}</b>
+          <span style="font-size: 12px; font-family: var(--f-mono); color: var(--accent); font-weight: 700;">${esc(l.ko)} · ${l.age} tuổi</span>
         </div>
         <div style="font-size: 12px; color: var(--ink2); margin-top: 3px; font-family: var(--f-mono);">
           Nghề nghiệp: <b style="color:var(--ink);">${esc(l.job || 'Tự do / Khác')}</b> · Con cái: <b style="color:var(--ink);">${l.kids || 0} người</b>
         </div>
-        <div style="font-size: 12.5px; color: var(--ink); margin-top: 4px; border-top: 1px dashed var(--rule); padding-top: 4px;">
-          Tạ thế vì: <em style="color:var(--ink); font-weight:700;">${esc(l.cause)}</em>
+        <div style="font-size: 12.5px; color: var(--ink3); margin-top: 5px; border-top: 1px dashed var(--rule); padding-top: 5px;">
+          Tạ thế vì: <em style="color:var(--loss); font-weight:700; font-style:normal;">${esc(l.cause)}</em>
         </div>
       </div>
     </div>`;
   }).reverse().join('');
 
-  const content = `<div style="max-height: 72vh; overflow-y: auto; font-family: var(--serif); color:var(--ink);">
+  const content = `<div style="max-height: 72vh; overflow-y: auto; font-family: var(--f-body); color:var(--ink);">
     <!-- Summary Header -->
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 14px; border: 1px solid var(--ink); background: var(--card2); margin-bottom: 16px; text-align: center;">
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 14px; border: 1px solid var(--rule); background: var(--card2); border-radius: 8px; margin-bottom: 16px; text-align: center;">
       <div>
-        <div style="font-size: 10.5px; color: var(--ink); font-weight: 700; text-transform: uppercase; font-family: var(--f-mono);">TỔNG SỐ KIẾP</div>
+        <div style="font-size: 10.5px; color: var(--ink3); font-weight: 700; text-transform: uppercase; font-family: var(--f-mono);">TỔNG SỐ KIẾP</div>
         <div style="font-size: 20px; font-weight: 800; color: var(--ink); margin-top: 2px;">${lives.length} Kiếp</div>
       </div>
       <div>
-        <div style="font-size: 10.5px; color: var(--ink); font-weight: 700; text-transform: uppercase; font-family: var(--f-mono);">TỔNG THỌ MỆNH</div>
+        <div style="font-size: 10.5px; color: var(--ink3); font-weight: 700; text-transform: uppercase; font-family: var(--f-mono);">TỔNG THỌ MỆNH</div>
         <div style="font-size: 20px; font-weight: 800; color: var(--ink); margin-top: 2px;">${totYears} Năm</div>
       </div>
       <div>
-        <div style="font-size: 10.5px; color: var(--ink); font-weight: 700; text-transform: uppercase; font-family: var(--f-mono);">TUỔI THỌ BÌNH QUÂN</div>
-        <div style="font-size: 20px; font-weight: 800; color: var(--ink); margin-top: 2px;">${avgAge} Tuổi</div>
+        <div style="font-size: 10.5px; color: var(--ink3); font-weight: 700; text-transform: uppercase; font-family: var(--f-mono);">TUỔI THỌ BÌNH QUÂN</div>
+        <div style="font-size: 20px; font-weight: 800; color: var(--accent); margin-top: 2px;">${avgAge} Tuổi</div>
       </div>
     </div>
 
-    ${karma ? `<div style="padding: 10px 14px; border: 1px solid var(--accent); background: var(--accent-soft); margin-bottom: 16px; font-size: 12.5px; color: var(--ink); font-weight: 600;">
-      <b>ẤN KÝ LUÂN HỒI HIỆN TẠI:</b> [${esc(karma.title)}] · +${karma.pts} Điểm Thiện Nghiệp sẵn sàng ban phước cho kiếp kế tiếp.
+    ${karma ? `<div style="padding: 11px 14px; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent-soft); margin-bottom: 16px; font-size: 12.5px; color: var(--ink); font-weight: 600;">
+      <b style="color:var(--accent);">ẤN KÝ LUÂN HỒI HIỆN TẠI:</b> [${esc(karma.title)}] · +${karma.pts} Điểm Thiện Nghiệp sẵn sàng ban phước cho kiếp kế tiếp.
     </div>` : ''}
 
     <div style="margin-top: 6px;">
@@ -2200,27 +2204,27 @@ function openCountriesSheet() {
     const rate = ((c.b / totBirths) * 100).toFixed(2);
     const pop = (c.pop / 1000).toFixed(1);
     const name = (typeof COUNTRY_T !== 'undefined' && COUNTRY_T[c.id]) || c.ko || c.id;
-    return `<tr class="cty-row" data-name="${name.toLowerCase()}" data-id="${c.id.toLowerCase()}" style="border-bottom: 1px solid var(--rule2); transition: background .15s ease;">
-      <td style="padding: 10px 8px; font-weight: 700; color: var(--ink) !important;">${i + 1}. ${name} <span style="font-size: 11.5px; opacity: 0.75; font-weight: 500;">(${c.id})</span></td>
-      <td style="padding: 10px 8px; text-align: right; font-family: var(--f-mono); font-weight: 700; color: var(--ink) !important;">${rate}%</td>
-      <td style="padding: 10px 8px; text-align: right; font-family: var(--f-mono); color: var(--ink) !important; font-weight: 600;">${pop} tr</td>
-      <td style="padding: 10px 8px; text-align: right; font-family: var(--f-mono); color: var(--ink) !important; font-weight: 600;">${c.le} tuổi</td>
-      <td style="padding: 10px 8px; text-align: right; font-family: var(--f-mono); color: var(--ink) !important; font-weight: 600;">${(c.ppp || 0).toLocaleString()}</td>
+    return `<tr class="cty-row" data-name="${name.toLowerCase()}" data-id="${c.id.toLowerCase()}" style="border-bottom: 1px solid var(--rule2); background: ${i % 2 === 0 ? 'var(--card)' : 'var(--card2)'}; transition: background .15s ease;">
+      <td style="padding: 10px 10px; font-weight: 700; color: var(--ink);"><span style="color:var(--ink3); font-size:11px; margin-right:4px;">${i + 1}.</span> ${name} <span style="font-size: 11px; color:var(--ink3); font-family:var(--f-mono); font-weight: 500;">(${c.id})</span></td>
+      <td style="padding: 10px 10px; text-align: right; font-family: var(--f-mono); font-weight: 700; color: var(--accent);">${rate}%</td>
+      <td style="padding: 10px 10px; text-align: right; font-family: var(--f-mono); color: var(--ink); font-weight: 600;">${pop} tr</td>
+      <td style="padding: 10px 10px; text-align: right; font-family: var(--f-mono); color: var(--good); font-weight: 600;">${c.le} tuổi</td>
+      <td style="padding: 10px 10px; text-align: right; font-family: var(--f-mono); color: var(--ink2); font-weight: 600;">$${(c.ppp || 0).toLocaleString()}</td>
     </tr>`;
   }).join('');
 
   const content = `<div style="max-height: 70vh; overflow-y: auto; color: var(--ink);">
-    <p style="font-size: 13.5px; color: var(--ink) !important; font-weight: 500; margin-top: 0; line-height: 1.5; opacity: 0.9;">Dữ liệu thống kê thực tế từ 172 quốc gia (UN World Population Prospects, WHO, World Bank). Bấm vào từng quốc gia để xem tỷ lệ sinh và mức sống.</p>
-    <input type="text" id="ctySearchInput" placeholder="🔍 Tìm kiếm quốc gia (VD: Việt Nam, Mỹ, Nhật, Đức...)" style="width: 100% !important; max-width: 100% !important; box-sizing: border-box; padding: 10px 14px; margin-bottom: 12px; font-size: 14px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper) !important; color: var(--ink) !important; font-weight: 500; outline: none;">
-    <div style="overflow-x: auto;">
-      <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: var(--ink) !important;">
-        <thead>
-          <tr style="border-bottom: 2px solid var(--rule); font-size: 12.5px; color: var(--ink) !important; font-weight: 700; text-align: left; background: var(--card2);">
-            <th style="padding: 8px;">Quốc gia</th>
-            <th style="padding: 8px; text-align: right;">Tỷ lệ sinh</th>
-            <th style="padding: 8px; text-align: right;">Dân số</th>
-            <th style="padding: 8px; text-align: right;">Tuổi thọ</th>
-            <th style="padding: 8px; text-align: right;">GDP (PPP)</th>
+    <p style="font-size: 13.5px; color: var(--ink2); font-weight: 500; margin-top: 0; line-height: 1.5;">Dữ liệu thống kê thực tế từ 172 quốc gia (UN World Population Prospects, WHO, World Bank). Bấm vào từng quốc gia để xem tỷ lệ sinh và mức sống.</p>
+    <input type="text" id="ctySearchInput" placeholder="🔍 Tìm kiếm quốc gia (VD: Việt Nam, Mỹ, Nhật, Đức...)" style="width: 100%; box-sizing: border-box; padding: 10px 14px; margin-bottom: 12px; font-size: 14px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); font-weight: 500; outline: none;">
+    <div style="overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: var(--ink);">
+        <thead style="position: sticky; top: 0; z-index: 2;">
+          <tr style="border-bottom: 2px solid var(--rule); font-size: 12px; color: var(--ink); font-weight: 700; text-align: left; background: var(--card2);">
+            <th style="padding: 10px;">Quốc gia</th>
+            <th style="padding: 10px; text-align: right;">Tỷ lệ sinh</th>
+            <th style="padding: 10px; text-align: right;">Dân số</th>
+            <th style="padding: 10px; text-align: right;">Tuổi thọ</th>
+            <th style="padding: 10px; text-align: right;">GDP (PPP)</th>
           </tr>
         </thead>
         <tbody id="ctyTableBody">

@@ -1,0 +1,26 @@
+{
+  "name": "1in8b",
+  "version": "1.0.0",
+  "description": "",
+  "main": "era.js",
+  "scripts": {
+    "build": "node build.js",
+    "start": "python -m http.server 8080 --directory dist",
+    "start:dev": "python -m http.server 8080"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/letho1608/test.git"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/letho1608/test/issues"
+  },
+  "homepage": "https://github.com/letho1608/test#readme",
+  "devDependencies": {
+    "clean-css": "^5.3.3",
+    "javascript-obfuscator": "^5.9.0",
+    "terser": "^5.51.2"
+  }
+}

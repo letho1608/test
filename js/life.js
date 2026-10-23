@@ -548,7 +548,7 @@ function newLife(mode = 'birth', paceMin = 60, forceIso, o) {
 
   // Vô Hạn Lưu: Soul Karma (Luân Hồi Chủng Tử) Application (Pillar 6)
   try {
-    const rawKarma = localStorage.getItem('vhts_soul_karma');
+    const rawKarma = window.__SECURE_STORAGE__ ? window.__SECURE_STORAGE__.getItem('vhts_soul_karma', null) : localStorage.getItem('vhts_soul_karma');
     if (rawKarma) {
       const karma = JSON.parse(rawKarma);
       if (karma && karma.pts > 0) {

@@ -66,19 +66,82 @@ async function openCardSheet(kind) {
     <small>휴대폰에서는 '이미지 공유하기'로 스레드·인스타·카톡에 바로 올릴 수 있어요. 저장이 안 되면 카드를 길게 눌러 저장하세요.</small></div>`;
   track('card_open', { kind });
 }
-const TG = { data: null, at: 0, land: null, base: null, cell: 0, pulses: [], seen: new Set(), queue: [], raf: 0, on: false, feedI: 0, feedT: 0 };
+const TG = {
+  data: null,
+  at: 0,
+  land: null,
+  base: null,
+  cell: 0,
+  pulses: [],
+  seen: new Set(),
+  queue: [],
+  raf: 0,
+  on: false,
+  feedI: 0,
+  feedT: 0,
+  // Chế độ hiển thị: '3d' (Quả địa cầu 3D tương tác) hoặc '2d' (Bản đồ phẳng)
+  mode: (typeof localStorage !== 'undefined' && localStorage.getItem('tg_mode')) || '3d',
+  rotY: -2.05, // Góc quay kinh độ ban đầu (hướng về châu Á / Việt Nam / Thái Bình Dương)
+  rotX: 0.38,  // Góc nghiêng vĩ độ ban đầu (~22 độ tự nhiên của trục Trái Đất)
+  velY: 0,
+  velX: 0,
+  dragging: false,
+  dragMoved: false,
+  startX: 0,
+  startY: 0,
+  lastX: 0,
+  lastY: 0,
+  hasInteracted: false,
+  spherePoints: null,
+  countryPoints: null,
+  lastLocalPulse: 0
+};
+
 function tgLand() {
   if (TG.land) return TG.land;
   const raw = atob(WORLD.land), out = [];
   for (let i = 0; i < WORLD.w * WORLD.h; i++) if (raw.charCodeAt(i >> 3) & (128 >> (i & 7))) out.push([i % WORLD.w, Math.floor(i / WORLD.w)]);
   return (TG.land = out);
 }
+
+function tgInitSphere() {
+  if (TG.spherePoints) return;
+  const land = tgLand();
+  const spherePts = new Float32Array(land.length * 3);
+  for (let i = 0; i < land.length; i++) {
+    const [x, y] = land[i];
+    const lam = (x / WORLD.w) * Math.PI * 2 - Math.PI;
+    const phi = (0.5 - y / WORLD.h) * Math.PI;
+    const cosPhi = Math.cos(phi);
+    spherePts[i * 3]     = cosPhi * Math.sin(lam); // X0
+    spherePts[i * 3 + 1] = -Math.sin(phi);         // Y0
+    spherePts[i * 3 + 2] = cosPhi * Math.cos(lam); // Z0
+  }
+  TG.spherePoints = spherePts;
+
+  const countries = {};
+  for (const [iso, pt] of Object.entries(WORLD.at)) {
+    const lam = (pt[0] / WORLD.w) * Math.PI * 2 - Math.PI;
+    const phi = (0.5 - pt[1] / WORLD.h) * Math.PI;
+    const cosPhi = Math.cos(phi);
+    countries[iso] = {
+      x0: cosPhi * Math.sin(lam),
+      y0: -Math.sin(phi),
+      z0: cosPhi * Math.cos(lam),
+      flatX: pt[0],
+      flatY: pt[1]
+    };
+  }
+  TG.countryPoints = countries;
+}
+
 const tgAgo = s => s < 60 ? "vừa xong" : s < 3600 ? L`${Math.round(s / 60)}분 전` : L`${Math.round(s / 3600)}시간 전`;
 function tgEventText(k, c, a) {
-  const n = CBY[c] ? CBY[c].ko : c;
-  if (k === 'b') return L`누군가 ${n}에서 태어났어요`;
-  return a === 0 ? L`누군가 ${n}에서 첫 생일을 맞지 못하고 떠났어요` : L`누군가 ${n}에서 ${a}세에 삶을 마쳤어요`;
+  const n = CBY[c] ? (CBY[c].ko || CBY[c].name || c) : c;
+  if (k === 'b') return `Một sinh mệnh vừa chào đời tại ${n}`;
+  return a === 0 ? `Một em bé tại ${n} chưa kịp tròn một tuổi đã qua đời` : `Một sinh mệnh tại ${n} vừa tạ thế ở tuổi ${a}`;
 }
+
 function tgFeed(reset) {
   const el = $('#tgFeed'), r = TG.data && TG.data.recent; if (!el) return;
   if (!r || !r.length) { el.textContent = ''; return; }
@@ -87,6 +150,28 @@ function tgFeed(reset) {
   el.textContent = `${tgAgo(ago)} · ${tgEventText(ev[1], ev[2], ev[3])}`;
   TG.feedT = Date.now();
 }
+
+function tgUpdateModeUI() {
+  const hint = $('#globeHint');
+  if (hint) {
+    if (TG.mode === '3d' && !TG.hasInteracted) {
+      hint.classList.remove('hidden');
+    } else {
+      hint.classList.add('hidden');
+    }
+  }
+}
+
+function tgToggleMode() {
+  TG.mode = TG.mode === '3d' ? '2d' : '3d';
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('tg_mode', TG.mode);
+  }
+  tgUpdateModeUI();
+  TG.base = null;
+  tgSize();
+}
+
 function tgSize() {
   const cv = $('#tgMap'); if (!cv) return;
   const wrap = cv.parentElement || cv;
@@ -94,6 +179,22 @@ function tgSize() {
   const wrapH = wrap.clientHeight;
   if (!wrapW) return;
   const dpr = Math.max(1, window.devicePixelRatio || 1);
+
+  if (TG.mode === '3d') {
+    const wd = wrapW;
+    const ht = wrapH || Math.round(wrapW * 0.625);
+    const targetW = Math.round(wd * dpr);
+    const targetH = Math.round(ht * dpr);
+    if (cv.width === targetW && cv.height === targetH) return;
+    cv.style.width = wd + 'px';
+    cv.style.height = ht + 'px';
+    cv.width = targetW;
+    cv.height = targetH;
+    tgInitSphere();
+    return;
+  }
+
+  // Chế độ 2D Phẳng
   let cell = wrapW / WORLD.w;
   let ht = Math.round(cell * WORLD.h);
   let wd = wrapW;
@@ -109,54 +210,116 @@ function tgSize() {
   cv.height = Math.round(ht * dpr);
   TG.cell = cell;
   const b = document.createElement('canvas'); b.width = cv.width; b.height = cv.height;
-  const css = getComputedStyle(document.documentElement), x = b.getContext('2d');
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const x = b.getContext('2d');
+  const isDark = (document.documentElement.dataset && document.documentElement.dataset.theme) ? document.documentElement.dataset.theme !== 'light' : document.documentElement.getAttribute('data-theme') !== 'light';
   const col = isDark ? '#5A6578' : '#71717A';
   x.scale(dpr, dpr); x.fillStyle = col;
   const dotR = Math.max(1.2, cell * 0.38);
   for (const [i, j] of tgLand()) { x.beginPath(); x.arc((i + 0.5) * cell, (j + 0.5) * cell, dotR, 0, 7); x.fill(); }
   TG.base = b;
 }
+
 function tgStart() {
   if (TG.on) return; TG.on = true;
+  tgInitSphere();
   const cv = $('#tgMap');
-  if (cv && 'IntersectionObserver' in window) new IntersectionObserver(es => { TG.vis = es[0].isIntersecting; }, { threshold: 0 }).observe(cv); else TG.vis = true;
+  if (cv && 'IntersectionObserver' in window) {
+    new IntersectionObserver(es => { TG.vis = es[0].isIntersecting; }, { threshold: 0 }).observe(cv);
+  } else {
+    TG.vis = true;
+  }
+
   addEventListener('resize', () => { TG.base = null; tgSize(); });
   const wrap = cv && cv.parentElement;
   if (wrap && typeof ResizeObserver === 'function') new ResizeObserver(() => { TG.base = null; tgSize(); }).observe(wrap);
-  if (window.matchMedia) { const mq = matchMedia('(prefers-color-scheme: dark)'); const re = () => { TG.base = null; tgSize(); }; if (mq.addEventListener) mq.addEventListener('change', re); }
-  if (cv) cv.addEventListener('click', tgTap);
+  if (window.matchMedia) {
+    const mq = matchMedia('(prefers-color-scheme: dark)');
+    const re = () => { TG.base = null; tgSize(); };
+    if (mq.addEventListener) mq.addEventListener('change', re);
+  }
+
+  // Tương tác chuột & cảm ứng xoay 360 độ
+  if (cv) {
+    cv.addEventListener('pointerdown', tgPointerDown);
+    window.addEventListener('pointermove', tgPointerMove);
+    window.addEventListener('pointerup', tgPointerUp);
+    window.addEventListener('pointercancel', tgPointerUp);
+  }
+
+  const modeBtn = $('#tgModeBtn');
+  if (modeBtn) modeBtn.addEventListener('click', tgToggleMode);
+  tgUpdateModeUI();
+
   let last = 0;
   const loop = t => {
     TG.raf = requestAnimationFrame(loop);
-    if (t - last < 33 || UI.view !== 'intro' || document.visibilityState !== 'visible') return;
-    if (!TG.base) { tgSize(); TG.vis = TG.vis || !!TG.base; }
+    if (t - last < 30 || UI.view !== 'intro' || document.visibilityState !== 'visible') return;
+    if (TG.mode === '2d' && !TG.base) { tgSize(); }
     if (!TG.vis) return;
-    last = t; tgDraw(t);
+    last = t;
+    tgDraw(t);
     if (Date.now() - TG.feedT > 4500) { TG.feedI++; tgFeed(); }
   };
   TG.raf = requestAnimationFrame(loop);
 }
-function tgDraw(t) {
-  const cv = $('#tgMap'); if (!cv || !TG.base) return;
-  const x = cv.getContext('2d'), dpr = cv.width / cv.clientWidth, cell = TG.cell, css = getComputedStyle(document.documentElement);
-  const accent = css.getPropertyValue('--accent').trim() || '#8C1D3C', stamp = css.getPropertyValue('--stamp').trim() || '#0F6E68', ink3 = css.getPropertyValue('--ink3').trim() || '#7A898D';
-  x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, cv.width, cv.height); x.drawImage(TG.base, 0, 0);
-  x.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const now = Date.now();
-  for (const [c, n] of (TG.data && TG.data.now) || []) {
-    const p = WORLD.at[c]; if (!p) continue;
-    const cx = p[0] * cell, cy = p[1] * cell, r = Math.min(Math.max(7, cell * 2.6), Math.max(cell * (0.55 + 0.32 * Math.sqrt(n)), 2 + 1.4 * Math.sqrt(n))),
-      ph = (t / 2600 + (cx * 7 + cy * 13) % 10 / 10) % 1;
-    x.globalAlpha = 0.22 * (1 - ph); x.strokeStyle = accent; x.lineWidth = 1.2;
-    x.beginPath(); x.arc(cx, cy, r + ph * cell * 2.2, 0, 7); x.stroke();
-    x.globalAlpha = 0.9; x.fillStyle = accent; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill();
+
+function tgPointerDown(e) {
+  const cv = $('#tgMap'); if (!cv) return;
+  TG.dragging = true;
+  TG.dragMoved = false;
+  TG.startX = e.clientX;
+  TG.startY = e.clientY;
+  TG.lastX = e.clientX;
+  TG.lastY = e.clientY;
+  TG.velY = 0;
+  TG.velX = 0;
+  if (!TG.hasInteracted) {
+    TG.hasInteracted = true;
+    const hint = $('#globeHint');
+    if (hint) hint.classList.add('hidden');
   }
-  // Autonomous Real-Time Live Population Pulses (Generates vibrant pulses even offline)
-  if (!TG.lastLocalPulse || now - TG.lastLocalPulse > 500) {
+  cv.classList.add('dragging');
+  try { cv.setPointerCapture(e.pointerId); } catch (err) { }
+}
+
+function tgPointerMove(e) {
+  if (!TG.dragging) return;
+  const dx = e.clientX - TG.lastX;
+  const dy = e.clientY - TG.lastY;
+  if (Math.hypot(e.clientX - TG.startX, e.clientY - TG.startY) > 5) {
+    TG.dragMoved = true;
+  }
+  if (TG.mode === '3d') {
+    TG.rotY += dx * 0.007;
+    TG.rotX = Math.max(-1.15, Math.min(1.15, TG.rotX + dy * 0.007));
+    TG.velY = dx * 0.007;
+    TG.velX = dy * 0.007;
+  }
+  TG.lastX = e.clientX;
+  TG.lastY = e.clientY;
+}
+
+function tgPointerUp(e) {
+  if (!TG.dragging) return;
+  TG.dragging = false;
+  const cv = $('#tgMap');
+  if (cv) {
+    cv.classList.remove('dragging');
+    try { cv.releasePointerCapture(e.pointerId); } catch (err) { }
+  }
+  if (!TG.dragMoved) {
+    tgTap(e);
+  }
+}
+
+function tgDraw(t) {
+  const cv = $('#tgMap'); if (!cv) return;
+  const now = Date.now();
+
+  // Tạo xung nhịp sinh tử ngẫu nhiên liên tục phản ánh dân số thế giới thực tế
+  if (!TG.lastLocalPulse || now - TG.lastLocalPulse > 420) {
     TG.lastLocalPulse = now;
-    // Weighted selection of country by birth population
-    const topIsos = ['IND', 'CHN', 'NGA', 'PAK', 'IDN', 'COD', 'ETH', 'USA', 'BGD', 'VNM', 'BRA', 'PHL', 'EGY', 'JPN', 'DEU', 'GBR', 'FRA', 'ZAF'];
+    const topIsos = ['IND', 'CHN', 'NGA', 'PAK', 'IDN', 'COD', 'ETH', 'USA', 'BGD', 'VNM', 'BRA', 'PHL', 'EGY', 'JPN', 'DEU', 'GBR', 'FRA', 'ZAF', 'MEX', 'KOR', 'TUR', 'IRN', 'THA', 'ITA', 'ESP', 'CAN', 'AUS'];
     const pickIso = topIsos[Math.floor(Math.random() * topIsos.length)];
     const isBirth = Math.random() < 0.65;
     TG.pulses.push({
@@ -166,19 +329,324 @@ function tgDraw(t) {
     });
   }
 
-  while (TG.queue.length && TG.queue[0].show <= now) { const ev = TG.queue.shift(); TG.pulses.push(Object.assign(ev, { t0: now })); }
+  while (TG.queue.length && TG.queue[0].show <= now) {
+    const ev = TG.queue.shift();
+    TG.pulses.push(Object.assign(ev, { t0: now }));
+  }
   TG.pulses = TG.pulses.filter(pl => { const age = now - pl.t0; return age >= 0 && age < 2600; });
+
+  if (TG.mode === '3d') {
+    tgDraw3D(t, cv, now);
+  } else {
+    tgDraw2D(t, cv, now);
+  }
+}
+
+// ==================== RENDERING 3D HOLOGRAPHIC GLOBE ====================
+function tgDraw3D(t, cv, now) {
+  const ctx = cv.getContext('2d');
+  const w = cv.clientWidth;
+  const h = cv.clientHeight;
+  if (!w || !h) return;
+  const dpr = cv.width / w;
+
+  // Vật lý xoay quán tính và tự động quay khi nhàn rỗi
+  if (!TG.dragging) {
+    TG.rotY += TG.velY + 0.0016; // Tự động quay êm ái quanh trục Trái Đất
+    TG.rotX += TG.velX;
+    TG.velY *= 0.94; // Lực ma sát giảm tốc
+    TG.velX *= 0.94;
+    TG.rotX = Math.max(-1.15, Math.min(1.15, TG.rotX));
+  }
+
+  const cx = w / 2;
+  const cy = h / 2;
+  const R = Math.min(w, h) * 0.44;
+  const isDark = (document.documentElement.dataset && document.documentElement.dataset.theme) ? document.documentElement.dataset.theme !== 'light' : document.documentElement.getAttribute('data-theme') !== 'light';
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // 1. Quầng hào quang khí quyển (Atmospheric Glow - tông màu ấm đồng bộ tổng thể web)
+  const glow = ctx.createRadialGradient(cx, cy, R * 0.90, cx, cy, R * 1.28);
+  if (isDark) {
+    // Hào quang ấm hổ phách thiên hà đồng bộ với tông chủ đạo (#F59E0B) và nền đen ấm (#0B0E14)
+    glow.addColorStop(0, 'rgba(245, 158, 11, 0.16)');
+    glow.addColorStop(0.35, 'rgba(217, 119, 6, 0.07)');
+    glow.addColorStop(0.7, 'rgba(180, 83, 9, 0.02)');
+    glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  } else {
+    glow.addColorStop(0, 'rgba(180, 83, 9, 0.12)');
+    glow.addColorStop(0.5, 'rgba(217, 119, 6, 0.04)');
+    glow.addColorStop(1, 'rgba(255, 255, 255, 0)');
+  }
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(cx, cy, R * 1.28, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 2. Thân khối cầu đại dương 3D (Tông than chì ấm đồng điệu với thẻ card và nền web)
+  const sphereGrad = ctx.createRadialGradient(
+    cx - R * 0.35, cy - R * 0.35, R * 0.05,
+    cx, cy, R
+  );
+  if (isDark) {
+    sphereGrad.addColorStop(0, '#1E2534'); // Điểm sáng than chì ấm (--card2)
+    sphereGrad.addColorStop(0.55, '#131722'); // Thân cầu sẫm đồng bộ với card (#151921)
+    sphereGrad.addColorStop(1, '#0B0E14'); // Vùng bóng rìa khớp hoàn toàn với nền trang (#0B0E14)
+  } else {
+    sphereGrad.addColorStop(0, '#FFFFFF');
+    sphereGrad.addColorStop(0.65, '#F1F5F9');
+    sphereGrad.addColorStop(1, '#CBD5E1');
+  }
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.fillStyle = sphereGrad;
+  ctx.fill();
+
+  // Viền rìa sáng góc nghiêng (Limb Highlight)
+  ctx.strokeStyle = isDark ? 'rgba(245, 158, 11, 0.32)' : 'rgba(180, 83, 9, 0.35)';
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+
+  // Tính ma trận xoay
+  const cosY = Math.cos(TG.rotY), sinY = Math.sin(TG.rotY);
+  const cosX = Math.cos(TG.rotX), sinX = Math.sin(TG.rotX);
+
+  // 3. Hệ lưới tọa độ 3D (Graticule: Xích đạo & Kinh tuyến wireframe hổ phách thanh lịch)
+  ctx.strokeStyle = isDark ? 'rgba(245, 158, 11, 0.13)' : 'rgba(180, 83, 9, 0.14)';
+  ctx.lineWidth = 0.9;
+  ctx.setLineDash([3, 4]);
+
+  // Vòng Xích đạo (Equator)
+  ctx.beginPath();
+  let firstEq = true;
+  for (let a = 0; a <= Math.PI * 2 + 0.1; a += 0.12) {
+    const x0 = Math.sin(a), y0 = 0, z0 = Math.cos(a);
+    const x1 = x0 * cosY + z0 * sinY;
+    const z1 = -x0 * sinY + z0 * cosY;
+    const y2 = y0 * cosX - z1 * sinX;
+    const z2 = y0 * sinX + z1 * cosX;
+    if (z2 > -0.05) {
+      const px = cx + x1 * R, py = cy + y2 * R;
+      if (firstEq) { ctx.moveTo(px, py); firstEq = false; } else { ctx.lineTo(px, py); }
+    } else {
+      firstEq = true;
+    }
+  }
+  ctx.stroke();
+
+  // Vòng Chí tuyến Bắc & Nam (+23.4° & -23.4°)
+  for (const latDeg of [23.4, -23.4]) {
+    const phi = (latDeg * Math.PI) / 180;
+    const cosP = Math.cos(phi), sinP = -Math.sin(phi);
+    ctx.beginPath();
+    let firstTr = true;
+    for (let a = 0; a <= Math.PI * 2 + 0.1; a += 0.16) {
+      const x0 = cosP * Math.sin(a), y0 = sinP, z0 = cosP * Math.cos(a);
+      const x1 = x0 * cosY + z0 * sinY;
+      const z1 = -x0 * sinY + z0 * cosY;
+      const y2 = y0 * cosX - z1 * sinX;
+      const z2 = y0 * sinX + z1 * cosX;
+      if (z2 > -0.05) {
+        const px = cx + x1 * R, py = cy + y2 * R;
+        if (firstTr) { ctx.moveTo(px, py); firstTr = false; } else { ctx.lineTo(px, py); }
+      } else {
+        firstTr = true;
+      }
+    }
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  // 4. Các điểm lục địa (Landmass Dots)
+  if (!TG.spherePoints) tgInitSphere();
+  const pts = TG.spherePoints;
+  const count = pts.length / 3;
+  const baseDotR = Math.max(1.15, R * 0.0165);
+
+  // Lượt 1: Các điểm bán cầu sau (Holographic translucent back)
+  if (isDark) {
+    ctx.fillStyle = 'rgba(71, 85, 105, 0.15)';
+    for (let i = 0; i < count; i += 2) { // Tối ưu vẽ 50% điểm bán cầu sau
+      const x0 = pts[i * 3], y0 = pts[i * 3 + 1], z0 = pts[i * 3 + 2];
+      const x1 = x0 * cosY + z0 * sinY;
+      const z1 = -x0 * sinY + z0 * cosY;
+      const y2 = y0 * cosX - z1 * sinX;
+      const z2 = y0 * sinX + z1 * cosX;
+      if (z2 <= 0) {
+        ctx.fillRect(cx + x1 * R - 0.7, cy + y2 * R - 0.7, 1.4, 1.4);
+      }
+    }
+  }
+
+  // Lượt 2: Các điểm bán cầu trước (Front hemisphere với độ sâu và sáng bóng)
+  for (let i = 0; i < count; i++) {
+    const x0 = pts[i * 3], y0 = pts[i * 3 + 1], z0 = pts[i * 3 + 2];
+    const x1 = x0 * cosY + z0 * sinY;
+    const z1 = -x0 * sinY + z0 * cosY;
+    const y2 = y0 * cosX - z1 * sinX;
+    const z2 = y0 * sinX + z1 * cosX;
+    if (z2 > 0) {
+      const px = cx + x1 * R;
+      const py = cy + y2 * R;
+      const r = (0.72 + 0.52 * z2) * baseDotR;
+
+      if (isDark) {
+        if (z2 > 0.65) {
+          ctx.fillStyle = 'rgba(248, 250, 252, 0.95)'; // Đỉnh bóng sáng ấm áp (--ink)
+        } else if (z2 > 0.25) {
+          ctx.fillStyle = 'rgba(203, 213, 225, 0.85)'; // Thân lục địa sáng rõ (--ink2)
+        } else {
+          ctx.fillStyle = 'rgba(148, 163, 184, 0.55)'; // Rìa chân trời (--ink3)
+        }
+      } else {
+        if (z2 > 0.65) {
+          ctx.fillStyle = 'rgba(30, 41, 59, 0.95)';
+        } else if (z2 > 0.25) {
+          ctx.fillStyle = 'rgba(71, 85, 105, 0.85)';
+        } else {
+          ctx.fillStyle = 'rgba(148, 163, 184, 0.60)';
+        }
+      }
+      ctx.beginPath();
+      ctx.arc(px, py, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // 5. Điểm sáng người chơi đang hoạt động (Active players hotspots - Tông hổ phách thương hiệu #F59E0B)
+  for (const [c, n] of (TG.data && TG.data.now) || []) {
+    const pt = TG.countryPoints && TG.countryPoints[c];
+    if (!pt) continue;
+    const x1 = pt.x0 * cosY + pt.z0 * sinY;
+    const z1 = -pt.x0 * sinY + pt.z0 * cosY;
+    const y2 = pt.y0 * cosX - z1 * sinX;
+    const z2 = pt.y0 * sinX + z1 * cosX;
+    if (z2 > 0.05) {
+      const px = cx + x1 * R;
+      const py = cy + y2 * R;
+      const ph = (t / 2400 + (px * 3 + py * 7) % 10 / 10) % 1;
+      const pr = (6 + 14 * ph) * (0.8 + 0.3 * z2);
+      ctx.strokeStyle = '#F59E0B'; // Vàng hổ phách chủ đạo
+      ctx.lineWidth = 1.3;
+      ctx.globalAlpha = 0.8 * (1 - ph);
+      ctx.beginPath(); ctx.arc(px, py, pr, 0, Math.PI * 2); ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = '#FBBF24';
+      ctx.beginPath(); ctx.arc(px, py, Math.max(2.2, 3.5 * z2), 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // 6. Xung nhịp sinh tử thời gian thực: Cột sáng laser + Sóng năng lượng tỏa
+  for (const pl of TG.pulses) {
+    const pt = TG.countryPoints && TG.countryPoints[pl.c];
+    if (!pt) continue;
+    const x1 = pt.x0 * cosY + pt.z0 * sinY;
+    const z1 = -pt.x0 * sinY + pt.z0 * cosY;
+    const y2 = pt.y0 * cosX - z1 * sinX;
+    const z2 = pt.y0 * sinX + z1 * cosX;
+    if (z2 > -0.15) {
+      const px = cx + x1 * R;
+      const py = cy + y2 * R;
+      const k = (now - pl.t0) / 2600;
+      const dScale = 0.65 + 0.35 * Math.max(0, z2);
+      const isBirth = pl.k === 'b';
+      const color = isBirth ? '#10B981' : '#EF4444'; // Ngọc Lục Bảo (Sinh) & Đỏ Hồng Ngọc (Tử)
+      const glowCol = isBirth ? '#34D399' : '#F87171';
+
+      // Sóng xung kích tỏa tròn
+      const shockR = (5 + 32 * k) * dScale;
+      ctx.globalAlpha = 0.9 * (1 - k);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = Math.max(1, 2.4 * (1 - k * 0.6));
+      ctx.beginPath();
+      ctx.arc(px, py, shockR, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Cột laser ba chiều vươn thẳng từ bề mặt Trái Đất (Holographic Beacon Beam)
+      const beamLen = (28 * (1 - k) + 6) * dScale;
+      const topX = px + x1 * beamLen;
+      const topY = py + y2 * beamLen;
+
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(topX, topY);
+      ctx.lineWidth = 1.8 * (1 - k * 0.4);
+      ctx.strokeStyle = glowCol;
+      ctx.stroke();
+
+      // Hạt năng lượng đỉnh cột sáng
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.arc(topX, topY, Math.max(1.8, 3.2 * (1 - k)), 0, Math.PI * 2);
+      ctx.fill();
+
+      // Tâm điểm phát sáng
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(px, py, Math.max(2, 4.2 * (1 - k)), 0, Math.PI * 2);
+      ctx.fill();
+
+      // Thẻ sự kiện mini bay lơ lửng (Floating Badge) khi xung nhịp còn mới (< 1 giây)
+      if (k < 0.42 && z2 > 0.2) {
+        ctx.save();
+        const badgeAlpha = Math.min(1, (0.42 - k) / 0.12);
+        ctx.globalAlpha = badgeAlpha;
+        const tagText = `${isBirth ? '+1' : '-1'} ${pl.c}`;
+        ctx.font = 'bold 9.5px monospace';
+        const txtW = ctx.measureText(tagText).width;
+        const bx = topX + 4;
+        const by = topY - 12;
+
+        ctx.fillStyle = isDark ? 'rgba(21, 25, 33, 0.90)' : 'rgba(255, 255, 255, 0.95)';
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(bx - 3, by - 8, txtW + 6, 13, 3) : ctx.rect(bx - 3, by - 8, txtW + 6, 13);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = color;
+        ctx.fillText(tagText, bx, by + 2);
+        ctx.restore();
+      }
+    }
+  }
+
+  ctx.globalAlpha = 1;
+}
+
+// ==================== RENDERING 2D FLAT MAP ====================
+function tgDraw2D(t, cv, now) {
+  if (!TG.base) return;
+  const x = cv.getContext('2d'), dpr = cv.width / cv.clientWidth, cell = TG.cell, css = getComputedStyle(document.documentElement);
+  const accent = css.getPropertyValue('--accent').trim() || '#8C1D3C';
+  x.setTransform(1, 0, 0, 1, 0, 0);
+  x.clearRect(0, 0, cv.width, cv.height);
+  x.drawImage(TG.base, 0, 0);
+  x.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  for (const [c, n] of (TG.data && TG.data.now) || []) {
+    const p = WORLD.at[c]; if (!p) continue;
+    const cx = p[0] * cell, cy = p[1] * cell, r = Math.min(Math.max(7, cell * 2.6), Math.max(cell * (0.55 + 0.32 * Math.sqrt(n)), 2 + 1.4 * Math.sqrt(n))),
+      ph = (t / 2600 + (cx * 7 + cy * 13) % 10 / 10) % 1;
+    x.globalAlpha = 0.22 * (1 - ph); x.strokeStyle = accent; x.lineWidth = 1.2;
+    x.beginPath(); x.arc(cx, cy, r + ph * cell * 2.2, 0, 7); x.stroke();
+    x.globalAlpha = 0.9; x.fillStyle = accent; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill();
+  }
+
   for (const pl of TG.pulses) {
     const p = WORLD.at[pl.c]; if (!p) continue;
     const k = (now - pl.t0) / 2600;
-    const color = pl.k === 'b' ? '#16A34A' : '#DC2626'; // Vibrant Emerald for Birth, Crimson Ruby for Death
+    const color = pl.k === 'b' ? '#10B981' : '#EF4444';
     x.globalAlpha = 0.9 * (1 - k);
     x.strokeStyle = color;
     x.lineWidth = 2.2;
     x.beginPath();
     x.arc(p[0] * cell, p[1] * cell, cell * (0.8 + k * 5.2), 0, 7);
     x.stroke();
-    // Inner bright core
     x.globalAlpha = 0.8 * (1 - k);
     x.fillStyle = color;
     x.beginPath();
@@ -187,20 +655,75 @@ function tgDraw(t) {
   }
   x.globalAlpha = 1;
 }
+
+// ==================== TAP / CLICK TOOLTIP ====================
 function tgTap(e) {
-  const cv = $('#tgMap'), tip = $('#tgTip'); if (!cv || !tip || !TG.data) return;
+  const cv = $('#tgMap'), tip = $('#tgTip'); if (!cv || !tip) return;
   const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+  const box = (tip.parentElement || cv).getBoundingClientRect();
+
+  if (TG.mode === '3d') {
+    const w = cv.clientWidth, h = cv.clientHeight;
+    const cx = w / 2, cy = h / 2, R = Math.min(w, h) * 0.44;
+    const distCenter = Math.hypot(mx - cx, my - cy);
+    if (distCenter > R * 1.08) { tip.hidden = true; return; }
+
+    const cosY = Math.cos(TG.rotY), sinY = Math.sin(TG.rotY);
+    const cosX = Math.cos(TG.rotX), sinX = Math.sin(TG.rotX);
+
+    let bestIso = null, bd = 1e9, bestPx = 0, bestPy = 0;
+    for (const [iso, pt] of Object.entries(TG.countryPoints || {})) {
+      const x1 = pt.x0 * cosY + pt.z0 * sinY;
+      const z1 = -pt.x0 * sinY + pt.z0 * cosY;
+      const y2 = pt.y0 * cosX - z1 * sinX;
+      const z2 = pt.y0 * sinX + z1 * cosX;
+      if (z2 > 0.05) {
+        const px = cx + x1 * R;
+        const py = cy + y2 * R;
+        const d = Math.hypot(px - mx, py - my);
+        if (d < bd) { bd = d; bestIso = iso; bestPx = px; bestPy = py; }
+      }
+    }
+
+    if (!bestIso || bd > 26) { tip.hidden = true; return; }
+
+    const cInfo = (typeof CBY !== 'undefined' && CBY[bestIso]) || { ko: bestIso };
+    const countryName = cInfo.ko || cInfo.name || bestIso;
+    const popStr = cInfo.pop ? `Dân số: ${cInfo.pop} triệu` : '';
+    const leStr = cInfo.le ? `Tuổi thọ TB: ${cInfo.le} tuổi` : '';
+    const extra = [popStr, leStr].filter(Boolean).join(' · ');
+
+    tip.innerHTML = `<b>${esc(countryName)}</b> (${bestIso})<br><small style="color:var(--ink3);">${esc(extra || 'Đang cập nhật dữ liệu')}</small>`;
+    const tipX = r.left - box.left + bestPx;
+    const tipY = r.top - box.top + bestPy;
+    tip.style.left = Math.min(box.width - 190, Math.max(8, tipX - 85)) + 'px';
+    tip.style.top = Math.max(0, tipY + 14) + 'px';
+    tip.hidden = false;
+    return;
+  }
+
+  // Chế độ 2D
   let best = null, bd = 1e9;
-  for (const g of TG.data.now || []) {
+  for (const g of (TG.data && TG.data.now) || []) {
     const p = WORLD.at[g[0]]; if (!p || !CBY[g[0]]) continue;
     const d = Math.hypot(p[0] * TG.cell - mx, p[1] * TG.cell - my); if (d < bd) { bd = d; best = g; }
   }
-  if (!best || bd > Math.max(18, TG.cell * 4)) { tip.hidden = true; return; }
-  const ages = best[2].map(a => a < 0 ? "đang chào đời" : L`${a}세`);
-  tip.innerHTML = L`<b>${esc(CBY[best[0]].ko)}</b> ${best[1]}명이 살고 있어요<br><small>${esc(ages.join(', '))}${best[1] > ages.length ? ' …' : ''}</small>`;
-  const p = WORLD.at[best[0]], box = (tip.parentElement || cv).getBoundingClientRect();
+  if (!best || bd > Math.max(18, TG.cell * 4)) {
+    // Thử tìm theo danh sách quốc gia phẳng
+    for (const [iso, p] of Object.entries(WORLD.at)) {
+      const d = Math.hypot(p[0] * TG.cell - mx, p[1] * TG.cell - my);
+      if (d < bd) { bd = d; best = [iso, 0, []]; }
+    }
+    if (!best || bd > Math.max(18, TG.cell * 4)) { tip.hidden = true; return; }
+  }
+
+  const cInfo = (typeof CBY !== 'undefined' && CBY[best[0]]) || { ko: best[0] };
+  const countryName = cInfo.ko || cInfo.name || best[0];
+  tip.innerHTML = `<b>${esc(countryName)}</b> (${best[0]})<br><small style="color:var(--ink3);">${cInfo.pop ? `Dân số: ${cInfo.pop}M · ` : ''}${cInfo.le ? `Tuổi thọ: ${cInfo.le} tuổi` : ''}</small>`;
+  const p = WORLD.at[best[0]];
   const px = r.left - box.left + p[0] * TG.cell, py = r.top - box.top + p[1] * TG.cell;
-  tip.style.left = Math.min(box.width - 178, Math.max(8, px - 80)) + 'px'; tip.style.top = Math.max(0, py + 14) + 'px';
+  tip.style.left = Math.min(box.width - 190, Math.max(8, px - 85)) + 'px';
+  tip.style.top = Math.max(0, py + 14) + 'px';
   tip.hidden = false;
 }
 const CM = { last: 0, more: true, armed: 0 };

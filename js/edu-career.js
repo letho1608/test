@@ -5,7 +5,7 @@ function die(forced, label) {
   const k = forced || pickCause(c, S.age, S.sex);
   const w = causeWeights(c, S.age, S.sex, false); let tot = 0; for (const x in w) tot += w[x];
   const share = w[k] && k !== 'suic' ? w[k] / tot : null;
-  S.deathAt = { age: S.age, cause: k, label: label || causeLabel(k, S.age, S.sex), share, where: c.id };
+  S.deathAt = { age: S.age, cause: k, label: label || causeLabel(k, S.age, S.sex) || (typeof CAUSE !== 'undefined' && CAUSE[k]) || 'Tuổi cao sức yếu', share, where: c.id };
   if (ddKept() && S.money < 0) { book(S.flags.ddHome === 'gh' ? "Hỗ trợ của nhà ở nhóm" : "Phần gia đình sống cùng gánh giúp", -S.money); S.money = 0; }
   if (S.age >= 80 && !label && SLEEP_END.includes(k) && chance(0.3)) S.deathAt.sleep = 1;
   const last = S.years[S.years.length - 1];
@@ -13,11 +13,11 @@ function die(forced, label) {
   else S.years.push({ a: S.age, h: Math.round(S.st.h), hl: Math.round(S.st.hl), so: Math.round(S.st.so), sm: Math.round(S.st.sm), nw: Math.round(netWorth()), inc: Math.round(S.income), mk: 'death', cur: studyWhere() || S.cur });
   S.phase = 'dead'; S.queue = []; S.pending = null;
   if (insOn() && S.age >= 18 && S.age < 70 && ((S.fam.married && S.fam.partner && S.fam.partner.alive) || S.fam.kids.some(k => k.alive && S.age - k.bornAt < 25))) {
-    const x = incomeAt(C(), 0.5) * 4; S.money += x; log(L`생명보험금 ${wonStr(x)}이 남은 가족에게 나왔습니다.`, 'note'); }
-  { const hid = S.age >= 30 && NCD_K.find(x => S.conds[x] && S.conds[x].dx === false && NCD_CAUSE[x].includes(k)); if (hid) log(L`몸에는 ${iga(ncdName(hid))} 있었지만, 끝내 진단받지 못했습니다.`, 'note'); }
-  const dl = S.deathAt.label.replace(/ \(.*\)$|（.*）$/, '');
-  if (k === 'suic') log(L`${S.age}세, 자살로 세상을 떠났습니다.`, 'death', L`자살은 한 가지 이유로 일어나지 않으며, 예방할 수 있습니다 (WHO) · ${SUIC_HELP()}`);
-  else log(k === 'hom' && !label ? L`${S.age}세, 누군가의 폭력에 목숨을 잃었습니다.` : LOST.has(k) ? L`${S.age}세, ${ro(dl)} 목숨을 잃었습니다.` : S.age < 5 ? L`${S.age}세, ${ro(dl)} 세상을 떠났습니다.` : S.deathAt.sleep ? L`${S.age}세, ${ro(dl)} 잠든 채 조용히 생을 마감했습니다.` : L`${S.age}세, ${ro(dl)} 생을 마감했습니다.`, 'death');
+    const x = incomeAt(C(), 0.5) * 4; S.money += x; log(`Tiền bảo hiểm nhân thọ ${wonStr(x)} đã được chi trả cho gia đình còn lại.`, 'note'); }
+  { const hid = S.age >= 30 && NCD_K.find(x => S.conds[x] && S.conds[x].dx === false && NCD_CAUSE[x].includes(k)); if (hid) log(`Trong người có bệnh mãn tính nhưng đến cuối cùng vẫn không được chẩn đoán.`, 'note'); }
+  const dl = (S.deathAt.label || 'nguyên nhân tự nhiên').replace(/ \(.*\)$|（.*）$/, '');
+  if (k === 'suic') log(`${S.age} tuổi, đã qua đời do tự vẫn.`, 'death', `Tự tử không thể giải thích bằng một lý do duy nhất và có thể phòng ngừa được (WHO) · ${SUIC_HELP()}`);
+  else log(k === 'hom' && !label ? `${S.age} tuổi, đã mất đi sinh mạng do bạo lực.` : LOST.has(k) ? `${S.age} tuổi, đã mất vì ${dl}.` : S.age < 5 ? `${S.age} tuổi, đã qua đời vì ${dl}.` : S.deathAt.sleep ? `${S.age} tuổi, đã thanh thản trút hơi thở cuối cùng trong giấc ngủ vì ${dl}.` : `${S.age} tuổi, đã qua đời vì ${dl}.`, 'death');
   HOOK.death();
 }
 const AWAY_DECS = new Set(['duikey', 'kinback', 'adsearch', 'vocation', 'kidcare', 'kidhome', 'job', 'jobchange', 'biz', 'bizfund', 'bizscale', 'rankup', 'growup', 'ownup', 'apprent', 'selfcode', 'protry', 'mustry', 'acttry', 'arttry', 'boardtry', 'gametry', 'kidout', 'coachq', 'histgo', 'histrg', 'histdemo', 'histjunta', 'histkhm', 'idolaud', 'traineeq',

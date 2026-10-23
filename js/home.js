@@ -650,9 +650,9 @@ const ageList = as => listAnd(as.map(String));
 const OPEN_KEY = 'one8b.past.open', OPEN_KEEP_MS = 3 * 3600e3;
 const lk = (k, lang = LANG) => lang !== 'ko' && /^one8b\.(save|lives|past|unlived)\./.test(k) ? 'one8b.' + lang + '.' + k.slice(6) : k;
 const ROOT_AWAY = false;
-function lsGet(k, d) { try { const v = localStorage.getItem(lk(k)); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
-function lsSet(k, v) { if (k === PAST_KEY && Array.isArray(v)) pdbPut(v); try { localStorage.setItem(lk(k), JSON.stringify(v)); return true; } catch (e) { return false; } }
-function lsDel(k) { try { localStorage.removeItem(lk(k)); } catch (e) { } }
+function lsGet(k, d) { if (window.__SECURE_STORAGE__) return window.__SECURE_STORAGE__.getJSON(lk(k), d); try { const v = localStorage.getItem(lk(k)); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+function lsSet(k, v) { if (k === PAST_KEY && Array.isArray(v)) pdbPut(v); if (window.__SECURE_STORAGE__) return window.__SECURE_STORAGE__.setItem(lk(k), v); try { localStorage.setItem(lk(k), JSON.stringify(v)); return true; } catch (e) { return false; } }
+function lsDel(k) { if (window.__SECURE_STORAGE__) return window.__SECURE_STORAGE__.removeItem(lk(k)); try { localStorage.removeItem(lk(k)); } catch (e) { } }
 const PDB = { db: null, ats: new Set(), full: false };
 const pdbOn = () => !(typeof EDU_ON !== 'undefined' && EDU_ON) && typeof indexedDB !== 'undefined' && typeof keepTok === 'function' && !!keepTok();
 const pdbKey = (at, lang = LANG) => lk(PAST_KEY, lang) + '|' + at, pdbAt = k => +String(k).split('|').pop();
@@ -755,9 +755,9 @@ const HARD_K = () => 1 + 0.45 * HARD_LV();
 const HARD_MONEY = () => 1 + 0.22 * HARD_LV();
 const CURSE_ON = () => !!UI.prefs.curse;
 const HARD_DESC = () => [
-  "Một cuộc đời bình thường: bệnh tật, tai nạn và nghèo đo đúng với thực tế.",
-  "Đời sống khắc nghiệt: bệnh nặng hơn, tai nạn dễ xảy ra hơn, mọi lớp đệm an toàn mỏng đi.",
-  "Tàn khốc: tử vong đến gần gấp đôi, thu nhập bị bào mòn, và gia đình không đỡ nổi nhiều như trước."][HARD_LV()];
+  "Cuộc đời bình thường: xác suất bệnh tật, tai nạn và kinh tế bám sát thực tế thế giới.",
+  "Đời sống khắc nghiệt hơn: tỷ lệ bệnh tật và rủi ro tăng 45%, đệm an toàn mỏng đi.",
+  "Thách thức cực đại: tỷ lệ tử vong tăng 90%, thu nhập và cơ hội sinh tồn bị bào mòn."][HARD_LV()];
 const CURSES = [
   { id: 'eye', n: "Con mắt thứ ba", d: "Bạn nhìn thấy thứ mà người khác không thấy — và đôi khi chúng cũng nhìn thấy bạn.", hl: -8, h: -4, mort: 0.12, ev: 'eye' },
   { id: 'cold', n: "Bàn tay lạnh", d: "Tay bạn luôn lạnh, kể cả giữa mùa hè. Bác sĩ không tìm ra lý do.", hl: -4, h: -8, mort: 0.08, ev: 'cold' },
@@ -844,17 +844,19 @@ function renderIntro() {
   const pop = UI.prefs.mode === 'pop', T = ey && eraReady && !rndY ? eraTot(ey) : null;
   $('#oddsTitle').textContent = rndY ? (pop ? L`${ERA_Y0}~${ERA_PAST1}년 가운데 어느 해에 살던 사람 중 한 명이라면` : L`${ERA_Y0}~${ERA_PAST1}년 가운데 어느 해에 태어난 아기라면`) : ek === 'past' ? (pop ? L`${ey}년에 살던 사람 중 한 명이라면` : L`${ey}년에 태어난 아기라면`) : ek === 'future' ? (pop ? "Nếu bạn là một trong những người đang sống hôm nay và sống tiếp vào thế giới sắp tới" : "Nếu bạn chào đời ngay bây giờ và sống trong thế giới sắp tới")
     : pop ? "Nếu bạn là một trong 8 tỷ người đang sống hôm nay" : "Nếu bạn là một em bé chào đời ngay lúc này";
-  $('#oddsSub').textContent = rndY && eraReady ? (pop ? L`UN 세계인구전망 2024 · ${ERA_Y0}~${ERA_PAST1}년 해마다의 인구 기준` : L`UN 세계인구전망 2024 · ${ERA_Y0}~${ERA_PAST1}년 출생아 ${koBig(eraAll().b)} 기준`) : T ? (pop ? L`UN 세계인구전망 2024 · ${ey}년 인구 ${koBig(T.p * 1000)} 기준` : L`UN 세계인구전망 2024 · ${ey}년 출생아 ${koBig(T.b)} 기준`)
-    : pop ? L`UN 세계인구전망 2024 · 2023년 인구 ${koBig(TOTAL_POP * 1000)} 기준` : L`UN 세계인구전망 2024 · 2023년 출생아 ${koBig(TOTAL_BIRTHS)} 기준`;
+  const oddsSubEl = $('#oddsSub');
+  if (oddsSubEl) { oddsSubEl.textContent = ''; oddsSubEl.hidden = true; oddsSubEl.style.display = 'none'; }
   $('#oddsList').innerHTML = top.map(c => `<div class="orow"><span>${esc(cLbl(c.ko))}</span><span class="bar"><i style="width:${(share(c) / max * 100).toFixed(1)}%"></i></span><span class="v">${fmtShare(share(c))}</span></div>`).join('') +
     L`<div class="orow"><span>나머지 ${COUNTRIES.length - top.length}개국</span><span class="bar"><i style="width:${Math.min(100, rest / max * 100).toFixed(1)}%;opacity:.45"></i></span><span class="v">${fmtShare(rest)}</span></div>`;
   const om = $('.oddsmore'); if (om) { if (om.dataset.t0 == null) om.dataset.t0 = om.textContent; om.textContent = ek === 'past' || UI.prefs.eraAny ? L`${COUNTRIES.length}개국의 지금 통계 보기` : om.dataset.t0; }
   for (const b of document.querySelectorAll('[data-mode]')) b.setAttribute('aria-pressed', String(b.dataset.mode === UI.prefs.mode));
   for (const b of document.querySelectorAll('[data-pace]')) b.setAttribute('aria-pressed', String(+b.dataset.pace === UI.prefs.pace));
   for (const b of document.querySelectorAll('[data-hard]')) b.setAttribute('aria-pressed', String(+b.dataset.hard === HARD_LV()));
-  for (const b of document.querySelectorAll('[data-curse]')) b.setAttribute('aria-pressed', String(!!b.dataset.curse === CURSE_ON()));
+  for (const b of document.querySelectorAll('[data-curse]')) b.setAttribute('aria-pressed', String((b.dataset.curse === '1') === CURSE_ON()));
   const hh = $('#hardHint');
-  if (hh) hh.textContent = HARD_DESC() + (CURSE_ON() ? " Chế độ Mắt xét: mỗi kiếp người sẽ mang một Lời nguyền, và những sự kiện tối sẽ xuất hiện nhiều hơn." : "");
+  if (hh) hh.textContent = HARD_DESC();
+  const ch = $('#curseHint');
+  if (ch) ch.textContent = CURSE_ON() ? "Mỗi kiếp sống sẽ mang một Lời nguyền ẩn và mở khóa các biến cố kỳ bí." : "Cuộc đời diễn ra tự nhiên theo xác suất thống kê thực tế.";
   const sv = lsGet(SAVE_KEY, null);
   const rb = $('#resumeBtn');
   if (sv && sv.S && (sv.S.phase === 'life' || sv.S.phase === 'birth') && CBY[sv.S.cur] && !(EDU_ON && !sv.S.eduOn)) {

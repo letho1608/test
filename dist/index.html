@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vô Hạn Trùng Sinh · ThoLe</title>
+<meta name="description" content="Vô Hạn Trùng Sinh: Trò chơi mô phỏng cuộc đời độc quyền của ThoLe.">
+<meta name="theme-color" content="#111111">
+<meta name="apple-mobile-web-app-title" content="Vô Hạn Trùng Sinh">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Vô Hạn Trùng Sinh">
+<meta property="og:title" content="Vô Hạn Trùng Sinh · ThoLe">
+<meta property="og:description" content="Trở thành một trong những em bé đang chào đời ngay lúc này và sống trọn cuộc đời ấy giữa những con số thống kê có thật của 172 quốc gia. Bạn sẽ chào đời ở đâu?">
+<meta property="og:locale" content="vi_VN">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Vô Hạn Trùng Sinh · ThoLe">
+<meta name="twitter:description" content="Trở thành một trong những em bé đang chào đời ngay lúc này và sống trọn cuộc đời ấy giữa những con số thống kê có thật của 172 quốc gia. Bạn sẽ chào đời ở đâu?">
+<meta name="color-scheme" content="light dark">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
+<meta name="referrer" content="no-referrer">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Cinzel:wght@600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/main.min.css">
+</head>
+<body>
+<main id="app">
+  <section id="intro">
+    <!-- TOP MASTHEAD -->
+    <header class="owid-masthead">
+      <div class="masthead-tag">
+        <span class="masthead-logo">VÔ HẠN TRÙNG SINH</span>
+      </div>
+      <div class="masthead-tools">
+        <button class="tool-btn musicbtn" data-music="1" aria-pressed="false">Âm thanh: Tắt</button>
+        <button class="tool-btn themebtn" id="themeBtn" type="button" aria-label="Sáng hay tối">Giao diện</button>
+      </div>
+    </header>
+
+    <div class="tg-tip" id="tgTip" hidden></div>
+
+    <div class="cockpit-viewport">
+      <div class="cockpit-grid">
+        
+        <!-- ==================== COLUMN 1: THIẾT LẬP THẦN HỒN ==================== -->
+        <div class="cockpit-panel">
+          <div class="panel-header">
+            <span>01 · THIẾT LẬP MÔ PHỎNG</span>
+            <span style="color:var(--ink); font-weight:700;">CONTROL</span>
+          </div>
+
+          <div class="cockpit-params">
+            <div class="param-row">
+              <span class="param-label">1. Thời đại khảo sát:</span>
+              <div class="param-buttons" role="group" aria-label="Thế giới nơi bạn chào đời">
+                <button data-era="now" aria-pressed="true">Hôm nay</button>
+                <button data-era="past" aria-pressed="false">Quá khứ</button>
+                <button data-era="future" aria-pressed="false">Tương lai</button>
+                <button data-era="any" aria-pressed="false">Bất kỳ</button>
+              </div>
+              <div class="erayr" id="eraYrRow" hidden style="margin-top: 6px; display: flex; align-items: center; gap: 8px;">
+                <label for="eraYr" style="font-family: var(--f-mono); font-size: 12px; white-space: nowrap; color: var(--ink2);">Năm sinh mục tiêu:</label>
+                <select id="eraYr" class="sel" style="flex: 1; padding: 5px 8px; font-family: var(--f-mono); font-size: 12.5px;"></select>
+              </div>
+              <p class="optgroup-hint" id="eraHint" style="font-size: 11.5px; color: var(--ink3); margin: 4px 0 0; line-height: 1.45;"></p>
+            </div>
+
+            <div class="param-row">
+              <span class="param-label">2. Mẫu phân bổ xác suất:</span>
+              <div class="param-buttons" role="group" aria-label="Cách chọn quốc gia">
+                <button data-mode="birth" aria-pressed="true">Em bé chào đời</button>
+                <button data-mode="pop" aria-pressed="false">Tổng dân số</button>
+              </div>
+            </div>
+
+            <div class="param-row">
+              <span class="param-label">3. Tốc độ trải nghiệm:</span>
+              <div class="param-buttons" role="group" aria-label="Độ dài một kiếp sống">
+                <button data-pace="30" aria-pressed="false">30 phút</button>
+                <button data-pace="60" aria-pressed="true">1 giờ</button>
+                <button data-pace="90" aria-pressed="false">1h 30p</button>
+              </div>
+            </div>
+
+            <div class="param-row">
+              <span class="param-label">4. Quốc gia đối chứng:</span>
+              <select id="homeSel" class="sel" style="width: 100%; padding: 7px 8px; font-family: var(--f-mono); font-size: 13px;"></select>
+            </div>
+
+            <div class="param-row">
+              <span class="param-label">5. Mức độ khắc nghiệt:</span>
+              <div class="param-buttons" role="group" aria-label="Mức độ khắc nghiệt của cuộc đời">
+                <button data-hard="0" aria-pressed="true">Chuẩn</button>
+                <button data-hard="1" aria-pressed="false">Khắc nghiệt</button>
+                <button data-hard="2" aria-pressed="false">Tàn khốc</button>
+              </div>
+              <p class="optgroup-hint" id="hardHint" style="font-size:11.5px;color:var(--ink3);margin:4px 0 0;line-height:1.4;"></p>
+            </div>
+
+            <div class="param-row">
+              <span class="param-label">6. Định mệnh:</span>
+              <div class="param-buttons" role="group" aria-label="Chế độ định mệnh">
+                <button data-curse="0" aria-pressed="true">Bình thường</button>
+                <button data-curse="1" aria-pressed="false">Lời nguyền (Kỳ bí)</button>
+              </div>
+              <p class="optgroup-hint" id="curseHint" style="font-size:11.5px;color:var(--ink3);margin:4px 0 0;line-height:1.4;"></p>
+            </div>
+          </div>
+
+          <!-- LAUNCH ACTIONS -->
+          <div class="cockpit-actions">
+            <button class="btn-launch" id="startBtn">► BẮT ĐẦU TRÙNG SINH</button>
+            <button class="btn-resume" id="resumeBtn" hidden>Tiếp tục kiếp trước</button>
+          </div>
+
+          <div class="guard" id="guard" hidden style="margin-top: 8px;"></div>
+          <p class="unl-back" id="unlBack" hidden><button class="ghost sm" id="unlOn" type="button"></button></p>
+          <div class="introfoot" id="introFoot" style="display:none;"><button class="ghost" id="resumeBtn2" hidden></button></div>
+
+          <!-- HIDDEN JS HOOKS -->
+          <p class="friendline" id="friendLine" hidden></p>
+          <div class="a2-tip a2-top" id="a2Tip" hidden></div>
+          <p class="tdband" id="tdBand" hidden style="display:none !important;"></p>
+          <div class="tg-live" id="tgLive" hidden><p class="tg-now"><span id="tgSub"></span></p><p class="tg-feed" id="tgFeed"></p></div>
+                  </div>
+
+        <!-- ==================== COLUMN 2: BẢN ĐỒ SINH TỬ ĐỊA CẦU ==================== -->
+        <div class="cockpit-panel cockpit-center-panel">
+          <div class="panel-header">
+            <span id="tgTitle">02 · BẢN ĐỒ BIẾN ĐỘNG DÂN CƯ TOÀN CẦU</span>
+            <span style="color:var(--ink); font-weight:700;">LIVE CANVAS</span>
+          </div>
+
+          <div class="map-wrapper" id="tgBg">
+            <canvas id="tgMap" role="img" aria-label="Bản đồ thế giới 3D với các điểm sinh tử thực tế"></canvas>
+            <div class="globe-hint" id="globeHint">✦ Kéo chuột / vuốt để xoay 360°</div>
+          </div>
+
+          <!-- REAL-TIME LIVE DEMOGRAPHIC TICKER -->
+          <div class="live-ticker" aria-live="off">
+            <div class="ticker-col">
+              <span class="ticker-num" id="cBirth" style="color:#10B981;">0</span>
+              <span class="ticker-txt">Trẻ chào đời kể từ khi mở trang</span>
+            </div>
+            <div style="width:1px; background:var(--rule); height:22px;"></div>
+            <div class="ticker-col">
+              <span class="ticker-num" id="cDeath" style="color:#EF4444;">0</span>
+              <span class="ticker-txt">Người qua đời cùng thời gian</span>
+            </div>
+          </div>
+
+          <!-- TWO STRATEGIC QUICK BUTTONS -->
+          <div class="center-quick-buttons">
+            <button type="button" class="quick-btn" id="openWorldCodex">
+              🌐 SỔ TAY ĐỊA LÝ (172 QG)
+            </button>
+            <button type="button" class="quick-btn" id="openSamsaraTree">
+              📜 CÂY PHẢ HỆ LUÂN HỒI
+            </button>
+          </div>
+        </div>
+
+        <!-- ==================== COLUMN 3: XÁC SUẤT XUẤT PHÁT ĐIỂM ==================== -->
+        <div class="cockpit-panel">
+          <div class="panel-header">
+            <span id="oddsTitle">03 · PHÂN BỔ XÁC SUẤT XUẤT PHÁT</span>
+          </div>
+
+          <div class="section-sub" id="oddsSub" style="display:none !important;" hidden></div>
+          
+          <div class="odds-scroll-box">
+            <div id="oddsList" class="owid-odds-list"></div>
+          </div>
+
+          <button type="button" class="btn-all-cty oddsmore" id="openCtyStats">
+            BẢNG THỐNG KÊ CHI TIẾT 172 QUỐC GIA →
+          </button>
+
+          <!-- COMPACT PAST LIVES PROFILE -->
+          <div class="cockpit-past pastlives" id="pastLives" hidden>
+            <div class="panel-header" style="border:none; padding:0; margin-bottom:4px;">
+              <span>HỒ SƠ CÁC KIẾP TRƯỚC</span>
+              <span class="lbl" id="pastSum" style="font-family: var(--f-mono); font-size: 11px;"></span>
+            </div>
+            <p class="pl-hint" id="pastHint" hidden></p>
+            <div class="pl-store" style="display:none;"><p id="pastStore"></p></div>
+            <div id="pastShelfBox"></div>
+            <div id="pastLook"></div>
+            <ul class="pl-list" id="pastBody"></ul>
+            <button class="ghost pl-more" id="pastMore" hidden style="font-size:10px; width:100%; padding:3px;">Xem thêm</button>
+            <div class="pl-edit" style="margin-top:4px; display:flex; gap:6px;"><button class="ghost sm" id="pastEdit" style="font-size:10px;">Dọn dẹp</button><button class="ghost sm" id="pastAll" hidden style="font-size:10px;">Xóa tất cả</button><p class="pl-hint" id="pastEditNote" hidden></p></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- BOTTOM COMPACT COLOPHON -->
+      <footer class="cockpit-footer">
+        <div>© 2026 <b>VÔ HẠN TRÙNG SINH</b> · TÁC GIẢ: <b>THOLE</b></div>
+        <div id="onlineLive" style="display:inline-flex; align-items:center; gap:6px;">
+          <span class="online-dot"></span>
+          <span>Số người chơi cùng lúc: <b id="onlineCountNum" style="color:var(--ink); font-variant-numeric:tabular-nums;">1.048</b></span>
+        </div>
+      </footer>
+    </div>
+  </section>
+
+  <section id="roll" class="wrap" hidden>
+    <div class="roller" id="roller">
+      <div class="lbl">Đang chọn nơi bạn chào đời</div>
+      <div class="country" id="rollName" aria-live="polite"></div>
+      <div class="meta" id="rollMeta"></div>
+    </div>
+    <div class="cert" id="cert" hidden>
+      <div class="band"><b>Đăng ký khai sinh</b><span id="certNo"></span></div>
+      <div class="body">
+        <div class="guilloche" id="certG" aria-hidden="true"></div>
+        <div class="lbl">Tên</div>
+        <h2 id="certName"></h2>
+        <p class="story" id="certStory"></p>
+        <p class="certpace" id="certPace"></p>
+        <div class="fields" id="certFields"></div>
+        <figure class="certmap" id="certMapF" hidden><canvas id="certMap" aria-hidden="true"></canvas><figcaption id="certMapC"></figcaption></figure>
+        <div class="odds-line" id="certOdds"></div>
+        <div class="homecmp" id="certHome" hidden></div>
+        <div class="certcomps" id="certComps"></div>
+      </div>
+      <div class="foot"><button class="ghost" id="certCardBtn">Chia sẻ thẻ chào đời</button><button class="cta" id="beginBtn">Bắt đầu kiếp sống này</button></div>
+    </div>
+  </section>
+
+  <section id="lifeview" hidden>
+    <header class="topbar">
+      <div class="wrap">
+        <div class="brand"><em>Vô Hạn</em> Trùng Sinh</div>
+        <div class="agebox">
+          <div class="age" id="ageNum">0<small> tuổi</small></div>
+          <div class="yr"><span class="t" id="ageYear"></span><div class="prog" aria-hidden="true"><i id="prog"></i></div></div>
+        </div>
+        <div class="speed" role="group" aria-label="Điều khiển thời gian">
+          <button id="pauseBtn" aria-pressed="false" aria-label="Tạm dừng">❚❚<span class="pzl"> Tạm dừng</span></button>
+          <span class="sps" id="spSet">
+            <button data-speed="1">1<span class="x">×</span></button>
+            <button data-speed="2">2<span class="x">×</span></button>
+            <button data-speed="4">4<span class="x">×</span></button>
+            <button data-speed="8">8<span class="x">×</span></button>
+            <button data-speed="12">12<span class="x">×</span></button>
+            <button data-speed="16">16<span class="x">×</span></button>
+          </span>
+          <p class="speedhint" id="speedHint" role="status" hidden></p>
+          <button class="ff" id="ffBtn" aria-pressed="false" aria-label="Tới quyết định tiếp theo"><span class="fftx">Tới quyết định tiếp theo</span><span class="ffsh">Tiếp</span> »</button>
+          <button class="ff morebtn" id="moreBtn" aria-expanded="false" aria-controls="moreMenu" aria-label="Xem thêm">⋯</button>
+          <div class="more" id="moreMenu">
+            <button class="ff" id="autoBtn" aria-pressed="false" title="Để các quyết định được đưa ra tự động và chỉ cần dõi theo">Tự động quyết định</button>
+            <button class="ff" data-music="1" aria-pressed="false" title="Nhạc nền êm dịu">♪ Nhạc</button><input type="range" class="vol" min="0" max="100" step="5" value="100" aria-label="Âm lượng nhạc" title="Âm lượng nhạc" hidden>
+            <button class="ff" id="pauseQ" aria-pressed="true" title="Dừng lại ở tuổi 5, 15, 30, 50 và 70 để ghi lại một suy nghĩ">✎ Ghi suy nghĩ</button>
+            <button class="ff themebtn2" id="themeBtn2" type="button">◐ Sáng hay tối</button>
+            <button class="ff mo" id="goFam">Gia đình và cuộc đời</button>
+            <button class="ff mo" id="goShop">Chi tiêu và đầu tư</button>
+            <button class="ff" id="quitBtn">Thoát</button>
+          </div>
+        </div>
+      </div>
+    </header>
+    <div class="wrap life">
+      <div class="col">
+        <div class="panel idcard p-id">
+          <div class="guilloche" id="idG" aria-hidden="true"></div>
+          <div class="top" id="idTop"></div>
+          <div class="in">
+            <div class="portrait" id="portrait"></div>
+            <div style="min-width:0"><div class="nm" id="idName"></div><dl id="idDl"></dl><p class="curse-row" id="idCurse" hidden></p></div>
+          </div>
+          <div class="mrz" id="mrz"></div>
+        </div>
+        <div class="panel p-stats">
+          <h3><span>Trạng thái</span><span class="lbl">0–100</span></h3>
+          <div id="statBars"></div>
+          <details class="stathelp"><summary>Các chỉ số này nghĩa là gì?</summary><ul>
+            <li><b>Sức khỏe</b> Ảnh hưởng đến nguy cơ qua đời và việc bạn có thể tiếp tục làm việc hay không. Tăng lên nhờ tập thể dục, khám sức khỏe và chăm sóc bản thân; giảm dần khi tuổi cao.</li>
+            <li><b>Hạnh phúc</b> Là mức độ hài lòng với cuộc sống. Thu nhập, gia đình và bạn bè, sức khỏe và nợ nần đều ảnh hưởng đến chỉ số này.</li>
+            <li><b>Kiến thức</b> Ảnh hưởng đến các kỳ thi tuyển sinh, lời mời làm việc và mức lương khởi điểm. Hoàn cảnh gia đình và điều kiện giáo dục của đất nước có tác động lớn hơn, và khi chỉ số đạt khoảng 70 trở lên thì tăng thêm cũng ít tạo ra khác biệt.</li>
+            <li><b>Quan hệ</b> Là sự gắn bó với gia đình và bạn bè. Ảnh hưởng đến hôn nhân và nguy cơ ly hôn, những cuộc trò chuyện với con cái, khả năng bị bắt nạt ở trường và nỗi cô đơn khi về già.</li>
+          </ul><p>Chỉ số cao chỉ làm tăng khả năng, chứ không quyết định kết quả. Cũng như ngoài đời thật, vận may và hoàn cảnh cũng góp phần.</p></details>
+          <div class="money" id="money"></div>
+          <div class="spend" id="spend" hidden></div>
+          <details class="stathelp" id="moneyHelp" hidden></details>
+        </div>
+        <div class="panel p-fam">
+          <h3><span>Gia đình và cuộc đời</span></h3>
+          <div class="fam" id="fam"></div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="panel p-scene"><div class="scene" id="scene" role="img" aria-label="Cuộc đời hiện tại"></div><p class="scenecap" id="sceneCap"></p></div>
+        <div class="minibar" id="miniBar" role="group" aria-label="Các chỉ số và trọng tâm năm nay">
+          <div class="mb-st" id="mbSt"></div>
+          <button type="button" class="mb-fo" id="mbFo" aria-expanded="false" aria-controls="mbPick"><span class="mb-fl">Trọng tâm</span><b id="mbFoN"></b><span class="mb-ar" aria-hidden="true">▾</span></button>
+          <button type="button" class="mb-sh" id="mbShop" aria-label="Chi tiêu và đầu tư">Chi tiêu</button>
+          <div class="mb-pick chips" id="mbPick" hidden></div>
+        </div>
+        <div class="panel p-focus">
+          <h3><span>Trọng tâm năm nay</span><span class="lbl" id="focusLbl">Có thể đổi bất cứ lúc nào</span></h3>
+          <div class="status" id="status"></div>
+          <p class="fohint" id="focusHint" role="status" hidden></p>
+          <div class="chips" id="focusChips"></div>
+        </div>
+        <div class="panel p-feed">
+          <h3><span>Ghi chép cuộc đời</span><span class="lbl">Mới nhất trước · <span class="sth">chạm vào một dòng để gắn ☆</span></span></h3>
+          <div class="feedmoney" id="feedMoney" hidden></div>
+          <p class="tgline" id="tgLine" hidden></p>
+          <ul class="feed" id="feed" aria-live="polite"></ul>
+          <button type="button" class="ghost sm feedmore" id="feedMore" aria-expanded="false" hidden>Xem các dòng cũ hơn</button>
+        </div>
+      </div>
+      <div class="col col3">
+        <div class="panel p-comps">
+          <h3><span>Những người sinh ra trong cùng một giây</span><span class="lbl">Ở đúng độ tuổi này</span></h3>
+          <ul class="comps" id="compList"></ul>
+        </div>
+        <div class="panel p-grid">
+          <h3><span>Bản đồ cuộc đời</span><span class="lbl">1 ô = 1 năm</span></h3>
+          <div class="grid10" id="grid"></div>
+          <div class="gridkey" id="gridKey"></div>
+        </div>
+        <div class="panel p-chart">
+          <h3><span>Đường cong sống sót</span><span class="lbl">Tỷ lệ người sinh cùng năm vẫn còn sống</span></h3>
+          <div class="chart" id="chart"></div>
+          <div class="legend" id="chartLegend"></div>
+        </div>
+        <div class="panel stats p-cty">
+          <h3><span id="ctyTitle"></span><button class="ghost" id="ctySwitch" style="padding:4px 10px;font-size:12px" hidden></button></h3>
+          <dl id="ctyDl"></dl>
+          <div class="src">Nguồn: UN World Population Prospects 2024, UN IGME, World Bank WDI, WHO (tử vong mẹ, hút thuốc, chi phí y tế), UNESCO UIS, UNDP HDR, ILO, UNAIDS, UNODC, UNICEF, World Happiness Report 2024 (phần lớn qua Our World in Data); thế giới quá khứ và tương lai còn dùng UN World Population Prospects 2024, World Urbanization Prospects 2018, Maddison Project 2020, UCDP/PRIO và Lee-Lee 2016. Một phần tỷ lệ tử vong do tai nạn giao thông và tỷ lệ tảo hôn, cùng các giá trị còn thiếu, được ước tính từ mức trung bình khu vực và các cách tương tự. Dữ liệu của World Bank, Our World in Data, Maddison, UCDP (CC BY 4.0) và của Liên Hợp Quốc (CC BY 3.0 IGO) đã được xử lý lại để sử dụng.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="dead" class="wrap" hidden></section>
+  </main>
+<div id="modal" class="scrim" hidden></div>
+<div class="decpeek" id="decPeek" role="region" aria-label="Quyết định đang chờ" hidden><span class="dp-t"><b>Một quyết định đang chờ bạn</b><small id="decPeekT"></small></span><button type="button" class="cta" id="decOpen">Mở lại</button></div>
+<button type="button" class="totop" id="toTop"><span aria-hidden="true">↑</span> Lên đầu trang</button>
+<div class="unlivedc" id="unlivedC" hidden aria-hidden="true"></div>
+<button type="button" class="unlived" id="unlived" hidden></button>
+<div id="tip" class="tip" hidden></div>
+<div id="sheet" class="scrim" hidden></div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<!--APP SECURE BUNDLE-->
+<script src="js/app.min.js"></script>
+</body>
+</html>

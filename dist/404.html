@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vô Hạn Trùng Sinh</title>
+<meta name="robots" content="noindex">
+<style>
+  html,body{margin:0;height:100%}
+  body{display:grid;place-items:center;background:#fff;color:#111;font:15px/1.6 system-ui,sans-serif;text-align:center;padding:24px}
+  @media (prefers-color-scheme:dark){body{background:#0d0d0d;color:#fff}}
+  a{color:inherit}
+  p{margin:6px 0}
+</style>
+</head>
+<body>
+<div>
+  <h1 style="font-size:22px;margin:0 0 10px">Vô Hạn Trùng Sinh</h1>
+  <p>Đang chuyển về trang chính…</p>
+  <p><a href="./">Bấm vào đây nếu không tự chuyển</a></p>
+</div>
+<script>
+(function () {
+  var base = new URL('.', document.currentScript.src).pathname;   // thu muc chua index.html
+  location.replace(base + 'index.html' + location.search + location.hash);
+})();
+</script>
+</body>
+</html>

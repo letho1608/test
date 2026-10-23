@@ -1096,7 +1096,7 @@ HOOK.death = () => {
       lastName: S.name ? S.name.full : 'Vô Danh',
       time: Date.now()
     };
-    localStorage.setItem('vhts_soul_karma', JSON.stringify(soulData));
+    if (window.__SECURE_STORAGE__) window.__SECURE_STORAGE__.setItem('vhts_soul_karma', soulData); else localStorage.setItem('vhts_soul_karma', JSON.stringify(soulData));
     S.generatedKarma = soulData;
   } catch (e) { console.error('Soul Karma calculation error:', e); }
   setTimeout(() => {
@@ -1139,8 +1139,29 @@ document.addEventListener('click', function(e) {
   const snap = data && data.S;
   if (snap) { UI.prefs = data.prefs || UI.prefs; restore(snap); }
   else { show('intro'); resumeDead(); }
+  initOnlineCounter();
   a2Init();
-    if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({ S, prefs: UI.prefs }));
+  if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({ S, prefs: UI.prefs }));
   requestAnimationFrame(t => { last = t; frame(t); });
+}
+
+// Bộ đếm số người chơi cùng lúc (mô phỏng nhịp thở máy chủ thời gian thực)
+let _onlineCount = Math.floor(980 + Math.random() * 240); // Khởi tạo ngẫu nhiên quanh khoảng 1.000 (980 - 1.220)
+function updateOnlineDisplay() {
+  const el = document.getElementById('onlineCountNum');
+  if (el) el.textContent = _onlineCount.toLocaleString('vi-VN');
+}
+function tickOnlinePlayers() {
+  const steps = [-2, -1, 0, 1, 1, 2, -1, 1];
+  const step = steps[Math.floor(Math.random() * steps.length)];
+  _onlineCount = Math.max(880, Math.min(1450, _onlineCount + step));
+  updateOnlineDisplay();
+  const delay = Math.floor(20000 + Math.random() * 25000);
+  setTimeout(tickOnlinePlayers, delay);
+}
+function initOnlineCounter() {
+  updateOnlineDisplay();
+  const initialDelay = Math.floor(15000 + Math.random() * 15000);
+  setTimeout(tickOnlinePlayers, initialDelay);
 }
 if (ROOT_AWAY) { } else if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(start); else start((window.claude && window.claude.hot && window.claude.hot.data) || {});

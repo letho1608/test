@@ -18,7 +18,15 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Vô Hạn Trùng Sinh · ThoLe">
 <meta name="twitter:description" content="Trở thành một trong những em bé đang chào đời ngay lúc này và sống trọn cuộc đời ấy giữa những con số thống kê có thật của 172 quốc gia. Bạn sẽ chào đời ở đâu?">
+<meta name="color-scheme" content="light dark">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
+<meta name="referrer" content="no-referrer">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Cinzel:wght@600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/main.css">
+<script src="js/security.js"></script>
 <script src="js/bootstrap.js"></script>
 </head>
 <body>
@@ -26,7 +34,9 @@
   <section id="intro">
     <!-- TOP MASTHEAD -->
     <header class="owid-masthead">
-      <div class="masthead-tag">TẬP SAN NGHIÊN CỨU NHÂN KHẨU HỌC TOÀN CẦU · DỮ LIỆU UN WPP · 172 QUỐC GIA</div>
+      <div class="masthead-tag">
+        <span class="masthead-logo">VÔ HẠN TRÙNG SINH</span>
+      </div>
       <div class="masthead-tools">
         <button class="tool-btn musicbtn" data-music="1" aria-pressed="false">Âm thanh: Tắt</button>
         <button class="tool-btn themebtn" id="themeBtn" type="button" aria-label="Sáng hay tối">Giao diện</button>
@@ -45,9 +55,6 @@
             <span style="color:var(--ink); font-weight:700;">CONTROL</span>
           </div>
 
-          <h1 class="cockpit-title"><em>Vô Hạn</em> Trùng Sinh</h1>
-          <p class="cockpit-sub">Mô hình xác suất một kiếp người giữa 8 tỷ nhân loại trên 172 quốc gia.</p>
-
           <div class="cockpit-params">
             <div class="param-row">
               <span class="param-label">1. Thời đại khảo sát:</span>
@@ -57,6 +64,11 @@
                 <button data-era="future" aria-pressed="false">Tương lai</button>
                 <button data-era="any" aria-pressed="false">Bất kỳ</button>
               </div>
+              <div class="erayr" id="eraYrRow" hidden style="margin-top: 6px; display: flex; align-items: center; gap: 8px;">
+                <label for="eraYr" style="font-family: var(--f-mono); font-size: 12px; white-space: nowrap; color: var(--ink2);">Năm sinh mục tiêu:</label>
+                <select id="eraYr" class="sel" style="flex: 1; padding: 5px 8px; font-family: var(--f-mono); font-size: 12.5px;"></select>
+              </div>
+              <p class="optgroup-hint" id="eraHint" style="font-size: 11.5px; color: var(--ink3); margin: 4px 0 0; line-height: 1.45;"></p>
             </div>
 
             <div class="param-row">
@@ -88,22 +100,17 @@
                 <button data-hard="1" aria-pressed="false">Khắc nghiệt</button>
                 <button data-hard="2" aria-pressed="false">Tàn khốc</button>
               </div>
+              <p class="optgroup-hint" id="hardHint" style="font-size:11.5px;color:var(--ink3);margin:4px 0 0;line-height:1.4;"></p>
             </div>
 
             <div class="param-row">
               <span class="param-label">6. Định mệnh:</span>
-              <div class="param-buttons" role="group" aria-label="Chế độ ma mắn">
+              <div class="param-buttons" role="group" aria-label="Chế độ định mệnh">
                 <button data-curse="0" aria-pressed="true">Bình thường</button>
-                <button data-curse="1" aria-pressed="false">Mắt xét (ma mắn)</button>
+                <button data-curse="1" aria-pressed="false">Lời nguyền (Kỳ bí)</button>
               </div>
+              <p class="optgroup-hint" id="curseHint" style="font-size:11.5px;color:var(--ink3);margin:4px 0 0;line-height:1.4;"></p>
             </div>
-            <p class="optgroup-hint" id="hardHint" style="font-size:11.5px;color:var(--ink3);margin:2px 0 0;line-height:1.4;"></p>
-
-            <div class="erayr" id="eraYrRow" hidden style="margin-top: 2px;">
-              <label for="eraYr" style="font-family: var(--f-mono); font-size: 12px; margin-right: 6px;">Năm sinh mục tiêu:</label>
-              <select id="eraYr" class="sel" style="padding: 6px 8px; font-family: var(--f-mono); font-size: 13px;"></select>
-            </div>
-            <span id="eraHint" style="display: none;"></span>
           </div>
 
           <!-- LAUNCH ACTIONS -->
@@ -131,18 +138,19 @@
           </div>
 
           <div class="map-wrapper" id="tgBg">
-            <canvas id="tgMap" role="img" aria-label="Bản đồ thế giới với các điểm sinh"></canvas>
+            <canvas id="tgMap" role="img" aria-label="Bản đồ thế giới 3D với các điểm sinh tử thực tế"></canvas>
+            <div class="globe-hint" id="globeHint">✦ Kéo chuột / vuốt để xoay 360°</div>
           </div>
 
           <!-- REAL-TIME LIVE DEMOGRAPHIC TICKER -->
           <div class="live-ticker" aria-live="off">
             <div class="ticker-col">
-              <span class="ticker-num" id="cBirth" style="color:#15803D;">0</span>
+              <span class="ticker-num" id="cBirth" style="color:#10B981;">0</span>
               <span class="ticker-txt">Trẻ chào đời kể từ khi mở trang</span>
             </div>
             <div style="width:1px; background:var(--rule); height:22px;"></div>
             <div class="ticker-col">
-              <span class="ticker-num" id="cDeath" style="color:#991B1B;">0</span>
+              <span class="ticker-num" id="cDeath" style="color:#EF4444;">0</span>
               <span class="ticker-txt">Người qua đời cùng thời gian</span>
             </div>
           </div>
@@ -162,10 +170,9 @@
         <div class="cockpit-panel">
           <div class="panel-header">
             <span id="oddsTitle">03 · PHÂN BỔ XÁC SUẤT XUẤT PHÁT</span>
-            <span style="color:var(--ink); font-weight:700;">DEMOGRAPHICS</span>
           </div>
 
-          <div class="section-sub" id="oddsSub" style="font-size:12.5px; color:var(--ink); font-weight:600; margin-bottom:8px;">UN World Population Prospects 2024</div>
+          <div class="section-sub" id="oddsSub" style="display:none !important;" hidden></div>
           
           <div class="odds-scroll-box">
             <div id="oddsList" class="owid-odds-list"></div>
@@ -196,7 +203,10 @@
       <!-- BOTTOM COMPACT COLOPHON -->
       <footer class="cockpit-footer">
         <div>© 2026 <b>VÔ HẠN TRÙNG SINH</b> · TÁC GIẢ: <b>THOLE</b></div>
-        <div>DỮ LIỆU: LIÊN HỢP QUỐC (UN WPP 2024), THE WORLD BANK, WHO</div>
+        <div id="onlineLive" style="display:inline-flex; align-items:center; gap:6px;">
+          <span class="online-dot"></span>
+          <span>Số người chơi cùng lúc: <b id="onlineCountNum" style="color:var(--ink); font-variant-numeric:tabular-nums;">1.048</b></span>
+        </div>
       </footer>
     </div>
   </section>
